@@ -400,12 +400,14 @@ serve(async (req) => {
 
     console.log("bitrix-install: returning success HTML, will redirect to:", iframeUrl);
 
-    const headers = new Headers(corsHeaders);
-    headers.set("content-type", "text/html; charset=utf-8");
-    headers.set("cache-control", "no-store, max-age=0");
-    headers.set("pragma", "no-cache");
+    const headers = new Headers({
+      ...corsHeaders,
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0",
+      Pragma: "no-cache",
+    });
 
-    return new Response(successHtml, {
+    return new Response(new TextEncoder().encode(successHtml), {
       headers,
       status: 200,
     });
