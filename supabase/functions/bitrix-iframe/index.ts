@@ -157,9 +157,13 @@ serve(async (req) => {
     ].join("\n");
 
     return new Response(statusText, { headers });
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+  } catch (error: unknown) {
+    console.error("Iframe handler error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    return new Response(
+      JSON.stringify({ success: false, error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
