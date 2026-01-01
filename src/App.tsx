@@ -10,6 +10,13 @@ import FieldMapping from "@/pages/FieldMapping";
 import Logs from "@/pages/Logs";
 import Robots from "@/pages/Robots";
 import Simulator from "@/pages/Simulator";
+import Financas from "@/pages/Financas";
+import Vendas from "@/pages/Vendas";
+import Estoque from "@/pages/Estoque";
+import CRM from "@/pages/CRM";
+import Compras from "@/pages/Compras";
+import Contratos from "@/pages/Contratos";
+import Contador from "@/pages/Contador";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +73,62 @@ const App = () => (
             element={
               <DashboardLayout>
                 <Simulator />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/financas"
+            element={
+              <DashboardLayout>
+                <Financas />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/vendas"
+            element={
+              <DashboardLayout>
+                <Vendas />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/estoque"
+            element={
+              <DashboardLayout>
+                <Estoque />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/crm"
+            element={
+              <DashboardLayout>
+                <CRM />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/compras"
+            element={
+              <DashboardLayout>
+                <Compras />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/contratos"
+            element={
+              <DashboardLayout>
+                <Contratos />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/contador"
+            element={
+              <DashboardLayout>
+                <Contador />
               </DashboardLayout>
             }
           />
