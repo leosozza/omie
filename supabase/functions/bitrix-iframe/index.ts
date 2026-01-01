@@ -17,10 +17,17 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    const appUrl = Deno.env.get("APP_URL");
+    if (!appUrl) {
+      console.error("bitrix-iframe: APP_URL not configured");
+      return new Response("APP_URL not configured", { status: 500, headers: corsHeaders });
+    }
+
     // Parse query parameters or body
     const url = new URL(req.url);
     let memberId: string | null = url.searchParams.get("member_id");
-    let domain: string | null = url.searchParams.get("DOMAIN");
+    let domain: string | null = url.searchParams.get("DOMAIN") || url.searchParams.get("domain");
+    const action = url.searchParams.get("action") || "";
 
     // If POST, also check body
     if (req.method === "POST") {
@@ -29,11 +36,11 @@ serve(async (req) => {
       if (contentType.includes("application/x-www-form-urlencoded")) {
         const formData = await req.formData();
         memberId = memberId || formData.get("member_id")?.toString() || null;
-        domain = domain || formData.get("DOMAIN")?.toString() || null;
+        domain = domain || formData.get("DOMAIN")?.toString() || formData.get("domain")?.toString() || null;
       } else if (contentType.includes("application/json")) {
         const body = await req.json();
         memberId = memberId || body.member_id || null;
-        domain = domain || body.DOMAIN || null;
+        domain = domain || body.DOMAIN || body.domain || null;
       }
     }
 
@@ -50,197 +57,96 @@ serve(async (req) => {
       }
     }
 
+    // If no member_id, use BX24 JS to get auth and redirect
     if (!memberId) {
-      // Return HTML that will redirect to the app
-      const appUrl = Deno.env.get("APP_URL") || "https://lovable.dev";
-
-      const headers = new Headers({
-        ...corsHeaders,
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store, max-age=0",
-        Pragma: "no-cache",
-      });
-
+      console.log("bitrix-iframe: no member_id, returning BX24 auth HTML");
+      
       const html = `<!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>Conector Omie - Loading...</title>
-            <script src="https://api.bitrix24.com/api/v1/"></script>
-          </head>
-          <body>
-            <script>
-              BX24.init(function() {
-                const auth = BX24.getAuth();
-                if (auth && auth.member_id) {
-                  window.location.href = '${appUrl}?member_id=' + auth.member_id + '&domain=' + auth.domain;
-                } else {
-                  document.body.innerHTML = '<p>Error: Could not authenticate with Bitrix24</p>';
-                }
-              });
-            </script>
-            <p>Loading...</p>
-          </body>
-        </html>`;
-
-      return new Response(new TextEncoder().encode(html), { headers });
-    }
-
-    // Get installation details
-    const { data: installation, error: fetchError } = await supabase
-      .from("bitrix_installations")
-      .select("*")
-      .eq("member_id", memberId)
-      .single();
-
-    if (fetchError || !installation) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Installation not found",
-          member_id: memberId,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 404,
-        }
-      );
-    }
-
-    // Check if token needs refresh
-    const expiresAt = new Date(installation.expires_at);
-    const now = new Date();
-    const fiveMinutes = 5 * 60 * 1000;
-
-    if (expiresAt.getTime() - now.getTime() < fiveMinutes) {
-      // Trigger token refresh
-      const refreshUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/bitrix-refresh-token`;
-      await fetch(refreshUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        },
-        body: JSON.stringify({ member_id: memberId }),
-      });
-    }
-
-    // Lazy registration: Check if robots need to be registered
-    if (!installation.robots_registered) {
-      // Queue robot registration (don't block the response)
-      registerRobots(supabase, installation).catch(console.error);
-    }
-
-    // Get Omie configuration status
-    const { data: omieConfig } = await supabase
-      .from("omie_configurations")
-      .select("id, is_active, last_sync")
-      .eq("tenant_id", memberId)
-      .single();
-
-    const headers = new Headers({
-      ...corsHeaders,
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store, max-age=0",
-      Pragma: "no-cache",
-    });
-
-    console.log("bitrix-iframe: serving HTML for tenant", installation.member_id);
-
-    const appHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>Conector Omie</title>
   <script src="https://api.bitrix24.com/api/v1/"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0d1f2d 0%,#1a3a4a 100%);min-height:100vh;padding:24px;color:#fff}
-    .container{max-width:900px;margin:0 auto}
-    .card{background:rgba(255,255,255,.05);border:1px solid rgba(0,212,212,.2);border-radius:16px;padding:24px;margin-bottom:20px;backdrop-filter:blur(10px)}
-    .header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
-    .logo{width:56px;height:56px;background:linear-gradient(135deg,#00d4d4 0%,#00a5a5 100%);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#0d1f2d;font-weight:bold;font-size:24px}
-    h1{font-size:26px;color:#fff;font-weight:600}
-    .subtitle{color:rgba(255,255,255,.7);font-size:14px;margin-top:4px}
-    .status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
-    .status-item{padding:20px;background:rgba(0,212,212,.08);border:1px solid rgba(0,212,212,.15);border-radius:12px}
-    .status-label{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-    .status-value{font-size:16px;font-weight:600;color:#fff}
-    .status-value.success{color:#00d4d4}
-    .status-value.warning{color:#f59e0b}
-    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:linear-gradient(135deg,#00d4d4 0%,#00a5a5 100%);color:#0d1f2d;border-radius:10px;font-weight:600;font-size:14px;border:none;cursor:pointer}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,212,212,.3)}
-    .btn-secondary{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
-    .warning-box{margin-top:24px;padding:20px;background:rgba(245,158,11,.1);border-radius:12px;border-left:4px solid #f59e0b}
-    .warning-box strong{color:#f59e0b;font-size:15px}
-    .warning-box p{margin-top:8px;color:rgba(255,255,255,.8);font-size:14px;line-height:1.5}
-    h2{font-size:18px;margin-bottom:16px;color:#fff;font-weight:500}
-    .robot-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-    .robot-badge{padding:6px 12px;background:rgba(0,212,212,.15);border:1px solid rgba(0,212,212,.3);border-radius:20px;font-size:12px;color:#00d4d4}
-  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <div class="header">
-        <div class="logo">O</div>
-        <div>
-          <h1>Conector Omie</h1>
-          <p class="subtitle">Integracao Bitrix24 + Omie ERP</p>
-        </div>
-      </div>
-      <div class="status-grid">
-        <div class="status-item">
-          <div class="status-label">Status</div>
-          <div class="status-value success">Ativo</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Tenant ID</div>
-          <div class="status-value">${installation.member_id.substring(0, 12)}...</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Omie</div>
-          <div class="status-value ${omieConfig?.is_active ? 'success' : 'warning'}">${omieConfig?.is_active ? 'Configurado' : 'Pendente'}</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Robos</div>
-          <div class="status-value ${installation.robots_registered ? 'success' : 'warning'}">${installation.robots_registered ? 'Registrados' : 'Registrando...'}</div>
-        </div>
-      </div>
-      ${!omieConfig?.is_active ? `
-      <div class="warning-box">
-        <strong>Configuracao Pendente</strong>
-        <p>Para usar a integracao, configure suas credenciais do Omie (App Key e App Secret).</p>
-      </div>` : ''}
-      <div class="actions">
-        <button class="btn" onclick="openConfig()">Configurar Omie</button>
-        <button class="btn btn-secondary" onclick="openMappings()">Mapeamentos</button>
-        <button class="btn btn-secondary" onclick="openLogs()">Ver Logs</button>
-      </div>
-    </div>
-    <div class="card">
-      <h2>Robos Disponiveis</h2>
-      <p style="color:rgba(255,255,255,.6);font-size:14px;margin-bottom:12px;">Use estes robos nos fluxos de automacao do Bitrix24:</p>
-      <div class="robot-list">
-        <span class="robot-badge">Omie: Vendas</span>
-        <span class="robot-badge">Omie: Financeiro</span>
-        <span class="robot-badge">Omie: Estoque</span>
-        <span class="robot-badge">Omie: CRM</span>
-        <span class="robot-badge">Omie: Contratos</span>
-      </div>
-    </div>
-  </div>
+  <p>Carregando...</p>
   <script>
-    BX24.init(function(){console.log('BX24 ready')});
-    function openConfig(){BX24.openApplication({bx24_width:800,action:'config'})}
-    function openMappings(){BX24.openApplication({bx24_width:900,action:'mappings'})}
-    function openLogs(){BX24.openApplication({bx24_width:900,action:'logs'})}
+    BX24.init(function() {
+      var auth = BX24.getAuth();
+      if (auth && auth.member_id) {
+        window.location.href = '${appUrl}?member_id=' + encodeURIComponent(auth.member_id) + '&domain=' + encodeURIComponent(auth.domain || '');
+      } else {
+        document.body.innerHTML = '<p>Erro: Não foi possível autenticar com Bitrix24</p>';
+      }
+    });
   </script>
 </body>
 </html>`;
 
-    return new Response(new TextEncoder().encode(appHtml), { headers });
+      return new Response(html, {
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
+    // Get installation to trigger background tasks
+    const { data: installation } = await supabase
+      .from("bitrix_installations")
+      .select("*")
+      .eq("member_id", memberId)
+      .single();
+
+    if (installation) {
+      // Check if token needs refresh
+      const expiresAt = new Date(installation.expires_at);
+      const now = new Date();
+      const fiveMinutes = 5 * 60 * 1000;
+
+      if (expiresAt.getTime() - now.getTime() < fiveMinutes) {
+        const refreshUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/bitrix-refresh-token`;
+        fetch(refreshUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ member_id: memberId }),
+        }).catch(console.error);
+      }
+
+      // Lazy robot registration
+      if (!installation.robots_registered) {
+        registerRobots(supabase, installation).catch(console.error);
+      }
+    }
+
+    // Build redirect URL based on action
+    let targetPath = "/";
+    switch (action) {
+      case "config":
+        targetPath = "/config";
+        break;
+      case "mappings":
+        targetPath = "/mapping";
+        break;
+      case "logs":
+        targetPath = "/logs";
+        break;
+      default:
+        targetPath = "/crm";
+    }
+
+    const redirectUrl = `${appUrl}${targetPath}?member_id=${encodeURIComponent(memberId)}${domain ? `&domain=${encodeURIComponent(domain)}` : ""}`;
+    
+    console.log("bitrix-iframe: redirecting to", redirectUrl);
+
+    // Return 302 redirect
+    return new Response(null, {
+      status: 302,
+      headers: {
+        ...corsHeaders,
+        Location: redirectUrl,
+      },
+    });
   } catch (error: unknown) {
     console.error("Iframe handler error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -325,13 +231,11 @@ async function registerRobots(supabase: any, installation: any) {
     const handlerUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/omie-multi-robot`;
 
     for (const robot of multiRobots) {
-      // Build action options for the select field
       const actionOptions: Record<string, string> = {};
       for (const action of robot.actions) {
         actionOptions[action.value] = action.label;
       }
 
-      // Register robot in Bitrix24 with action dropdown
       const registerPayload = {
         CODE: robot.code,
         HANDLER: handlerUrl,
@@ -353,22 +257,10 @@ async function registerRobots(supabase: any, installation: any) {
           },
         },
         RETURN_PROPERTIES: {
-          result_status: {
-            Name: "Status",
-            Type: "string",
-          },
-          result_id: {
-            Name: "ID do Resultado",
-            Type: "string",
-          },
-          result_url: {
-            Name: "URL (se aplicável)",
-            Type: "string",
-          },
-          result_message: {
-            Name: "Mensagem",
-            Type: "text",
-          },
+          result_status: { Name: "Status", Type: "string" },
+          result_id: { Name: "ID do Resultado", Type: "string" },
+          result_url: { Name: "URL (se aplicável)", Type: "string" },
+          result_message: { Name: "Mensagem", Type: "text" },
         },
       };
 
@@ -377,16 +269,12 @@ async function registerRobots(supabase: any, installation: any) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            auth: installation.access_token,
-            ...registerPayload,
-          }),
+          body: JSON.stringify({ auth: installation.access_token, ...registerPayload }),
         }
       );
 
       const result = await response.json();
 
-      // Save to registry
       await supabase.from("robots_registry").upsert(
         {
           tenant_id: installation.member_id,
@@ -403,7 +291,6 @@ async function registerRobots(supabase: any, installation: any) {
       console.log(`Robot ${robot.code} registered:`, !result.error);
     }
 
-    // Mark installation as robots registered
     await supabase
       .from("bitrix_installations")
       .update({ robots_registered: true })
