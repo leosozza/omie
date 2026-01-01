@@ -37,6 +37,28 @@ function safeJsonParse(str: string): unknown | null {
   }
 }
 
+// Helper to parse PHP array notation (auth[access_token]=xxx → { auth: { access_token: "xxx" } })
+function parsePhpArrayNotation(params: URLSearchParams): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of params.entries()) {
+    // Match patterns like "auth[access_token]" or "data[VERSION]"
+    const match = key.match(/^(\w+)\[(\w+)\]$/);
+    if (match) {
+      const [, parent, child] = match;
+      if (!result[parent] || typeof result[parent] !== "object") {
+        result[parent] = {};
+      }
+      (result[parent] as Record<string, string>)[child] = value;
+    } else {
+      // Simple key like "event"
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
 serve(async (req) => {
   const method = req.method;
   const contentType = req.headers.get("content-type") || "";
@@ -94,23 +116,45 @@ serve(async (req) => {
       // Parse as form data
       try {
         const params = new URLSearchParams(rawBody);
-        const event = params.get("event");
-        const dataStr = params.get("data");
-        const authStr = params.get("auth");
+        
+        // First try PHP array notation (auth[access_token]=xxx)
+        const parsed = parsePhpArrayNotation(params);
+        const hasPhpAuth = parsed.auth && typeof parsed.auth === "object" && 
+          ((parsed.auth as Record<string, string>).access_token || (parsed.auth as Record<string, string>).member_id);
+        
+        console.log(`bitrix-install: form parsed - hasPhpAuth=${hasPhpAuth} keys=${Object.keys(parsed).slice(0, 5).join(",")}`);
 
-        console.log(`bitrix-install: form parsed - event=${event} hasData=${!!dataStr} hasAuth=${!!authStr}`);
-
-        const dataParsed = dataStr ? safeJsonParse(dataStr) : {};
-        const authParsed = authStr ? safeJsonParse(authStr) : null;
-
-        if (authStr && !authParsed) {
-          parseError = "Invalid JSON in 'auth' field";
-        } else {
+        if (hasPhpAuth) {
+          // PHP array notation format
           installData = {
-            event: event || "ONAPPINSTALL",
-            data: (dataParsed as BitrixInstallEvent["data"]) || { LANGUAGE_ID: "", VERSION: "" },
-            auth: (authParsed as BitrixInstallEvent["auth"]) || {} as BitrixInstallEvent["auth"],
+            event: (parsed.event as string) || "ONAPPINSTALL",
+            data: (parsed.data as BitrixInstallEvent["data"]) || { LANGUAGE_ID: "", VERSION: "" },
+            auth: parsed.auth as BitrixInstallEvent["auth"],
           };
+          console.log("bitrix-install: parsed using PHP array notation");
+        } else {
+          // Fallback: try JSON stringified fields
+          const event = params.get("event");
+          const dataStr = params.get("data");
+          const authStr = params.get("auth");
+
+          console.log(`bitrix-install: trying JSON fields - event=${event} hasData=${!!dataStr} hasAuth=${!!authStr}`);
+
+          const dataParsed = dataStr ? safeJsonParse(dataStr) : {};
+          const authParsed = authStr ? safeJsonParse(authStr) : null;
+
+          if (authStr && !authParsed) {
+            parseError = "Invalid JSON in 'auth' field";
+          } else if (authParsed) {
+            installData = {
+              event: event || "ONAPPINSTALL",
+              data: (dataParsed as BitrixInstallEvent["data"]) || { LANGUAGE_ID: "", VERSION: "" },
+              auth: authParsed as BitrixInstallEvent["auth"],
+            };
+            console.log("bitrix-install: parsed using JSON stringified fields");
+          } else {
+            parseError = "No auth data found in form (tried PHP array and JSON string)";
+          }
         }
       } catch (e) {
         parseError = `Form parsing failed: ${e instanceof Error ? e.message : "unknown"}`;
@@ -122,27 +166,40 @@ serve(async (req) => {
         parseError = "Invalid JSON body";
       } else {
         installData = parsed as BitrixInstallEvent;
+        console.log("bitrix-install: parsed as JSON");
       }
     } else {
-      // Unknown content-type: try JSON first, then form
+      // Unknown content-type: try JSON first, then form with PHP notation
       const jsonParsed = safeJsonParse(rawBody);
-      if (jsonParsed && typeof jsonParsed === "object") {
+      if (jsonParsed && typeof jsonParsed === "object" && (jsonParsed as Record<string, unknown>).auth) {
         installData = jsonParsed as BitrixInstallEvent;
         console.log("bitrix-install: parsed as JSON (unknown content-type)");
       } else {
-        // Try form-urlencoded
+        // Try form-urlencoded with PHP array notation
         try {
           const params = new URLSearchParams(rawBody);
-          const authStr = params.get("auth");
-          if (authStr) {
-            const authParsed = safeJsonParse(authStr);
-            if (authParsed) {
-              installData = {
-                event: params.get("event") || "ONAPPINSTALL",
-                data: safeJsonParse(params.get("data") || "{}") as BitrixInstallEvent["data"] || { LANGUAGE_ID: "", VERSION: "" },
-                auth: authParsed as BitrixInstallEvent["auth"],
-              };
-              console.log("bitrix-install: parsed as form (unknown content-type)");
+          const parsed = parsePhpArrayNotation(params);
+          
+          if (parsed.auth && typeof parsed.auth === "object") {
+            installData = {
+              event: (parsed.event as string) || "ONAPPINSTALL",
+              data: (parsed.data as BitrixInstallEvent["data"]) || { LANGUAGE_ID: "", VERSION: "" },
+              auth: parsed.auth as BitrixInstallEvent["auth"],
+            };
+            console.log("bitrix-install: parsed as form with PHP notation (unknown content-type)");
+          } else {
+            // Try JSON stringified auth
+            const authStr = params.get("auth");
+            if (authStr) {
+              const authParsed = safeJsonParse(authStr);
+              if (authParsed) {
+                installData = {
+                  event: params.get("event") || "ONAPPINSTALL",
+                  data: safeJsonParse(params.get("data") || "{}") as BitrixInstallEvent["data"] || { LANGUAGE_ID: "", VERSION: "" },
+                  auth: authParsed as BitrixInstallEvent["auth"],
+                };
+                console.log("bitrix-install: parsed as form with JSON auth (unknown content-type)");
+              }
             }
           }
         } catch {
@@ -150,7 +207,7 @@ serve(async (req) => {
         }
 
         if (!installData) {
-          parseError = "Unable to parse body (tried JSON and form-urlencoded)";
+          parseError = "Unable to parse body (tried JSON, form with PHP notation, and form with JSON auth)";
         }
       }
     }
