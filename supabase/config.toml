@@ -38,3 +38,21 @@ verify_jwt = false
 
 [functions.omie-discover-fields]
 verify_jwt = false
+
+[functions.omie-financas]
+verify_jwt = false
+
+[functions.omie-boleto-pix]
+verify_jwt = false
+
+[functions.omie-estoque]
+verify_jwt = false
+
+[functions.omie-compras]
+verify_jwt = false
+
+[functions.omie-contratos-crm]
+verify_jwt = false
+
+[functions.omie-contador]
+verify_jwt = false
