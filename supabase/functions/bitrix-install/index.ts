@@ -117,23 +117,59 @@ serve(async (req) => {
       try {
         const params = new URLSearchParams(rawBody);
         
-        // First try PHP array notation (auth[access_token]=xxx)
+        // Log all received keys for debugging
+        const allKeys = Array.from(params.keys());
+        console.log(`bitrix-install: form keys received (${allKeys.length}): ${allKeys.join(", ")}`);
+        
+        // Strategy 1: PHP array notation (auth[access_token]=xxx)
         const parsed = parsePhpArrayNotation(params);
         const hasPhpAuth = parsed.auth && typeof parsed.auth === "object" && 
           ((parsed.auth as Record<string, string>).access_token || (parsed.auth as Record<string, string>).member_id);
-        
-        console.log(`bitrix-install: form parsed - hasPhpAuth=${hasPhpAuth} keys=${Object.keys(parsed).slice(0, 5).join(",")}`);
 
         if (hasPhpAuth) {
-          // PHP array notation format
           installData = {
             event: (parsed.event as string) || "ONAPPINSTALL",
             data: (parsed.data as BitrixInstallEvent["data"]) || { LANGUAGE_ID: "", VERSION: "" },
             auth: parsed.auth as BitrixInstallEvent["auth"],
           };
           console.log("bitrix-install: parsed using PHP array notation");
-        } else {
-          // Fallback: try JSON stringified fields
+        }
+        
+        // Strategy 2: FLAT parameters (AUTH_ID, REFRESH_ID, member_id, DOMAIN, etc.)
+        if (!installData) {
+          const authId = params.get("AUTH_ID") || params.get("access_token");
+          const refreshId = params.get("REFRESH_ID") || params.get("refresh_token");
+          const memberId = params.get("member_id") || params.get("MEMBER_ID");
+          const domain = params.get("DOMAIN") || params.get("domain") || "";
+          const serverEndpoint = params.get("SERVER_ENDPOINT") || params.get("server_endpoint") || "";
+          
+          console.log(`bitrix-install: checking FLAT params - AUTH_ID=${!!authId} member_id=${!!memberId} domain=${domain}`);
+          
+          if (authId && memberId) {
+            installData = {
+              event: params.get("event") || "ONAPPINSTALL",
+              data: { LANGUAGE_ID: params.get("LANG") || "br", VERSION: "1" },
+              auth: {
+                access_token: authId,
+                refresh_token: refreshId || "",
+                expires: params.get("AUTH_EXPIRES") || "3600",
+                expires_in: params.get("AUTH_EXPIRES") || "3600",
+                scope: params.get("scope") || "",
+                domain: domain,
+                server_endpoint: serverEndpoint || `https://${domain}/rest/`,
+                status: params.get("status") || "L",
+                client_endpoint: serverEndpoint || `https://${domain}/rest/`,
+                member_id: memberId,
+                user_id: params.get("user_id") || "",
+                application_token: params.get("APP_SID") || params.get("application_token") || "",
+              },
+            };
+            console.log("bitrix-install: parsed using FLAT parameters (AUTH_ID, member_id)");
+          }
+        }
+        
+        // Strategy 3: JSON stringified fields (auth as JSON string)
+        if (!installData) {
           const event = params.get("event");
           const dataStr = params.get("data");
           const authStr = params.get("auth");
@@ -153,7 +189,7 @@ serve(async (req) => {
             };
             console.log("bitrix-install: parsed using JSON stringified fields");
           } else {
-            parseError = "No auth data found in form (tried PHP array and JSON string)";
+            parseError = "No auth data found (tried: PHP array, FLAT params, JSON string)";
           }
         }
       } catch (e) {
