@@ -54,13 +54,14 @@ serve(async (req) => {
       // Return HTML that will redirect to the app
       const appUrl = Deno.env.get("APP_URL") || "https://lovable.dev";
 
-      const headers = new Headers(corsHeaders);
-      headers.set("content-type", "text/html; charset=utf-8");
-      headers.set("cache-control", "no-store, max-age=0");
-      headers.set("pragma", "no-cache");
+      const headers = new Headers({
+        ...corsHeaders,
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store, max-age=0",
+        Pragma: "no-cache",
+      });
 
-      return new Response(
-        `<!DOCTYPE html>
+      const html = `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
@@ -80,9 +81,9 @@ serve(async (req) => {
             </script>
             <p>Loading...</p>
           </body>
-        </html>`,
-        { headers }
-      );
+        </html>`;
+
+      return new Response(new TextEncoder().encode(html), { headers });
     }
 
     // Get installation details
@@ -137,10 +138,12 @@ serve(async (req) => {
       .eq("tenant_id", memberId)
       .single();
 
-    const headers = new Headers(corsHeaders);
-    headers.set("content-type", "text/html; charset=utf-8");
-    headers.set("cache-control", "no-store, max-age=0");
-    headers.set("pragma", "no-cache");
+    const headers = new Headers({
+      ...corsHeaders,
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0",
+      Pragma: "no-cache",
+    });
 
     console.log("bitrix-iframe: serving HTML for tenant", installation.member_id);
 
@@ -237,7 +240,7 @@ serve(async (req) => {
 </body>
 </html>`;
 
-    return new Response(appHtml, { headers });
+    return new Response(new TextEncoder().encode(appHtml), { headers });
   } catch (error: unknown) {
     console.error("Iframe handler error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
