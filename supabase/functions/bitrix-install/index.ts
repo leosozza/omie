@@ -349,7 +349,7 @@ serve(async (req) => {
 
     // Return success HTML page that redirects to the app
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const iframeUrl = `${supabaseUrl}/functions/v1/bitrix-iframe?member_id=${encodeURIComponent(auth.member_id)}`;
+    const iframeUrl = `${supabaseUrl}/functions/v1/bitrix-iframe?member_id=${encodeURIComponent(auth.member_id)}&v=2`;
 
     const successHtml = `<!DOCTYPE html>
 <html>
@@ -400,8 +400,13 @@ serve(async (req) => {
 
     console.log("bitrix-install: returning success HTML, will redirect to:", iframeUrl);
 
+    const headers = new Headers(corsHeaders);
+    headers.set("content-type", "text/html; charset=utf-8");
+    headers.set("cache-control", "no-store, max-age=0");
+    headers.set("pragma", "no-cache");
+
     return new Response(successHtml, {
-      headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" },
+      headers,
       status: 200,
     });
   } catch (error: unknown) {
