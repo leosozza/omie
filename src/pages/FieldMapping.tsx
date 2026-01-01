@@ -77,7 +77,7 @@ export default function FieldMapping() {
       const query = supabase
         .from("field_mappings")
         .select("*")
-        .eq("bitrix_entity", selectedBitrixEntity)
+        .eq("bitrix_entity", selectedBitrixEntity as Database["public"]["Enums"]["bitrix_entity"])
         .eq("omie_entity", selectedOmieEntity)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
