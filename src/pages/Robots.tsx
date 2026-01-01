@@ -100,6 +100,21 @@ export default function Robots() {
         </CardContent>
       </Card>
 
+      {/* Tenant Warning */}
+      {!memberId && (
+        <Card className="border-warning/50 bg-warning/10">
+          <CardContent className="flex items-center gap-4 pt-6">
+            <Bot className="h-8 w-8 text-warning" />
+            <div>
+              <h3 className="font-semibold text-warning">Acesse pelo Bitrix24</h3>
+              <p className="text-sm text-muted-foreground">
+                Para ver o status dos robots do seu portal, abra este painel diretamente pelo Bitrix24.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Robots Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">

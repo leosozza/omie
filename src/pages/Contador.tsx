@@ -134,47 +134,12 @@ export default function Contador() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { numero: "000123456", cliente: "Empresa ABC Ltda", valor: 5200, data: "2024-01-15", chave: "35240112345678000123550010001234561234567890" },
-                  { numero: "000123455", cliente: "Distribuidora 123", valor: 8900, data: "2024-01-14", chave: "35240112345678000123550010001234551234567891" },
-                  { numero: "000123454", cliente: "Tech Solutions", valor: 3200, data: "2024-01-13", chave: "35240112345678000123550010001234541234567892" },
-                  { numero: "000123453", cliente: "Indústria XYZ", valor: 15800, data: "2024-01-12", chave: "35240112345678000123550010001234531234567893" },
-                ].map((nfe) => (
-                  <div
-                    key={nfe.numero}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-module-contador/20">
-                        <CheckCircle2 className="h-5 w-5 text-module-contador" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">NF-e {nfe.numero}</p>
-                          <Badge>Autorizada</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{nfe.cliente}</p>
-                        <p className="text-xs text-muted-foreground font-mono truncate max-w-md">
-                          {nfe.chave}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {nfe.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(nfe.data).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <Button size="sm" variant="ghost">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Package className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhuma NF-e encontrada</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para exportar os XMLs
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -195,43 +160,12 @@ export default function Contador() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { numero: "000001234", cliente: "Tech Solutions S.A.", valor: 8500, data: "2024-01-05", municipio: "São Paulo" },
-                  { numero: "000001233", cliente: "Empresa ABC Ltda", valor: 3200, data: "2024-01-05", municipio: "São Paulo" },
-                  { numero: "000001232", cliente: "Startup XYZ", valor: 25000, data: "2024-01-03", municipio: "Rio de Janeiro" },
-                ].map((nfse) => (
-                  <div
-                    key={nfse.numero}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-module-servicos/20">
-                        <CheckCircle2 className="h-5 w-5 text-module-servicos" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">NFS-e {nfse.numero}</p>
-                          <Badge variant="secondary">{nfse.municipio}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{nfse.cliente}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {nfse.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(nfse.data).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <Button size="sm" variant="ghost">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhuma NFS-e encontrada</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para exportar os XMLs
+                </p>
               </div>
             </CardContent>
           </Card>
