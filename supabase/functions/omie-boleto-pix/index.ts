@@ -32,7 +32,7 @@ async function callOmieApi(endpoint: string, call: string, params: Record<string
   return response.json();
 }
 
-async function getOmieCredentials(supabase: ReturnType<typeof createClient>, tenantId: string): Promise<OmieCredentials> {
+async function getOmieCredentials(supabase: any, tenantId: string): Promise<OmieCredentials> {
   const { data, error } = await supabase
     .from("omie_configurations")
     .select("app_key, app_secret")

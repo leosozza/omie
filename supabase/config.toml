@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.omie-contador]
 verify_jwt = false
+
+[functions.omie-multi-robot]
+verify_jwt = false

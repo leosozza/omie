@@ -168,46 +168,86 @@ serve(async (req) => {
   }
 });
 
-// Background function to register robots
+// Background function to register multi-function robots
 async function registerRobots(supabase: any, installation: any) {
-  const robots = [
+  const multiRobots = [
     {
-      code: "OMIE_CREATE_ORDER",
-      name: "Gerar Pedido na Omie",
-      handler: "omie-robot-handler",
+      code: "OMIE_VENDAS",
+      name: "Omie: Vendas",
+      description: "Pedidos, OS, Faturamento e Notas Fiscais",
       entity_type: "deal",
+      actions: [
+        { value: "criar_pedido", label: "Gerar Pedido de Venda" },
+        { value: "criar_os", label: "Gerar Ordem de Serviço" },
+        { value: "faturar_pedido", label: "Faturar Pedido" },
+        { value: "faturar_os", label: "Faturar OS" },
+        { value: "obter_nfe", label: "Obter NF-e (PDF/XML)" },
+        { value: "obter_nfse", label: "Obter NFS-e (PDF/XML)" },
+      ],
     },
     {
-      code: "OMIE_CREATE_SERVICE_ORDER",
-      name: "Gerar OS na Omie",
-      handler: "omie-robot-handler",
+      code: "OMIE_FINANCEIRO",
+      name: "Omie: Financeiro",
+      description: "Boletos, PIX, Cobranças e Títulos",
       entity_type: "deal",
+      actions: [
+        { value: "gerar_boleto", label: "Gerar Boleto (Omie.Cash)" },
+        { value: "gerar_pix", label: "Gerar QR Code PIX" },
+        { value: "consultar_pagamento", label: "Consultar Status de Pagamento" },
+        { value: "baixar_titulo", label: "Baixar Título Manualmente" },
+        { value: "prorrogar_boleto", label: "Prorrogar Vencimento" },
+        { value: "verificar_inadimplencia", label: "Verificar Inadimplência do Cliente" },
+      ],
     },
     {
-      code: "OMIE_CHECK_PAYMENT",
-      name: "Consultar Status Financeiro",
-      handler: "omie-robot-handler",
+      code: "OMIE_ESTOQUE",
+      name: "Omie: Estoque",
+      description: "Posição, Reservas e Preços",
       entity_type: "deal",
+      actions: [
+        { value: "consultar_estoque", label: "Consultar Estoque Disponível" },
+        { value: "reservar_produtos", label: "Reservar Produtos" },
+        { value: "atualizar_precos", label: "Sincronizar Preços" },
+        { value: "alertar_minimo", label: "Verificar Estoque Mínimo" },
+      ],
     },
     {
-      code: "OMIE_GET_INVOICE",
-      name: "Obter Nota Fiscal (PDF)",
-      handler: "omie-robot-handler",
+      code: "OMIE_CLIENTES",
+      name: "Omie: Clientes/CRM",
+      description: "Sincronização e Histórico de Clientes",
       entity_type: "deal",
+      actions: [
+        { value: "sincronizar_cliente", label: "Sincronizar Cliente" },
+        { value: "consultar_historico", label: "Consultar Histórico de Compras" },
+        { value: "verificar_credito", label: "Verificar Limite de Crédito" },
+        { value: "obter_contatos", label: "Obter Contatos do Cliente" },
+      ],
     },
     {
-      code: "OMIE_SYNC_STOCK",
-      name: "Sincronizar Estoque",
-      handler: "omie-robot-handler",
+      code: "OMIE_CONTRATOS",
+      name: "Omie: Contratos",
+      description: "Recorrência e Faturamento de Contratos",
       entity_type: "deal",
+      actions: [
+        { value: "criar_contrato", label: "Criar Contrato de Recorrência" },
+        { value: "faturar_contrato", label: "Faturar Contrato do Mês" },
+        { value: "consultar_renovacao", label: "Consultar Renovações Pendentes" },
+        { value: "cancelar_contrato", label: "Cancelar Contrato" },
+      ],
     },
   ];
 
   try {
-    const handlerUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/omie-robot-handler`;
+    const handlerUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/omie-multi-robot`;
 
-    for (const robot of robots) {
-      // Register robot in Bitrix24
+    for (const robot of multiRobots) {
+      // Build action options for the select field
+      const actionOptions: Record<string, string> = {};
+      for (const action of robot.actions) {
+        actionOptions[action.value] = action.label;
+      }
+
+      // Register robot in Bitrix24 with action dropdown
       const registerPayload = {
         CODE: robot.code,
         HANDLER: handlerUrl,
@@ -215,7 +255,37 @@ async function registerRobots(supabase: any, installation: any) {
         NAME: robot.name,
         USE_PLACEMENT: "N",
         PLACEMENT_HANDLER: "",
-        RETURN_FIELDS: [],
+        PROPERTIES: {
+          action: {
+            Name: "Ação",
+            Type: "select",
+            Required: "Y",
+            Options: actionOptions,
+          },
+          omie_entity_id: {
+            Name: "ID da Entidade Omie (opcional)",
+            Type: "string",
+            Required: "N",
+          },
+        },
+        RETURN_PROPERTIES: {
+          result_status: {
+            Name: "Status",
+            Type: "string",
+          },
+          result_id: {
+            Name: "ID do Resultado",
+            Type: "string",
+          },
+          result_url: {
+            Name: "URL (se aplicável)",
+            Type: "string",
+          },
+          result_message: {
+            Name: "Mensagem",
+            Type: "text",
+          },
+        },
       };
 
       const response = await fetch(
@@ -232,7 +302,7 @@ async function registerRobots(supabase: any, installation: any) {
 
       const result = await response.json();
 
-      // Save to registry (ignore if already exists)
+      // Save to registry
       await supabase.from("robots_registry").upsert(
         {
           tenant_id: installation.member_id,
@@ -245,6 +315,8 @@ async function registerRobots(supabase: any, installation: any) {
         },
         { onConflict: "tenant_id,robot_code" }
       );
+
+      console.log(`Robot ${robot.code} registered:`, !result.error);
     }
 
     // Mark installation as robots registered
@@ -253,7 +325,7 @@ async function registerRobots(supabase: any, installation: any) {
       .update({ robots_registered: true })
       .eq("member_id", installation.member_id);
 
-    console.log("Robots registered for:", installation.member_id);
+    console.log("Multi-function robots registered for:", installation.member_id);
   } catch (error) {
     console.error("Error registering robots:", error);
   }
