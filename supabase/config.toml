@@ -1,1 +1,34 @@
 project_id = "lnlmcebmkmwkgmpyzhmg"
+
+[functions.bitrix-install]
+verify_jwt = false
+
+[functions.bitrix-uninstall]
+verify_jwt = false
+
+[functions.bitrix-iframe]
+verify_jwt = false
+
+[functions.bitrix-refresh-token]
+verify_jwt = false
+
+[functions.omie-validate]
+verify_jwt = false
+
+[functions.omie-sync-customer]
+verify_jwt = false
+
+[functions.omie-create-order]
+verify_jwt = false
+
+[functions.omie-create-service-order]
+verify_jwt = false
+
+[functions.omie-invoice-handler]
+verify_jwt = false
+
+[functions.omie-webhook]
+verify_jwt = false
+
+[functions.omie-robot-handler]
+verify_jwt = false

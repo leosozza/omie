@@ -32,9 +32,8 @@ serve(async (req) => {
         domain = domain || formData.get("DOMAIN")?.toString() || null;
       } else if (contentType.includes("application/json")) {
         const body = await req.json();
-        memberId = memberId || body.member_id;
-        domain = domain || body.DOMAIN;
-        authId = authId || body.AUTH_ID;
+        memberId = memberId || body.member_id || null;
+        domain = domain || body.DOMAIN || null;
       }
     }
 
