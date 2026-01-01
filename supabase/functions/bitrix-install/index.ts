@@ -292,6 +292,16 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Check if this is a reinstall (member_id already exists)
+    const { data: existingInstall } = await supabase
+      .from("bitrix_installations")
+      .select("id")
+      .eq("member_id", auth.member_id)
+      .maybeSingle();
+
+    const isReinstall = !!existingInstall;
+    console.log(`bitrix-install: isReinstall=${isReinstall} member_id=${auth.member_id}`);
+
     // Calculate token expiration
     const expiresIn = parseInt(auth.expires_in || "3600");
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
@@ -339,18 +349,31 @@ serve(async (req) => {
     // Log the installation event
     await supabase.from("integration_logs").insert({
       tenant_id: auth.member_id,
-      action: "app_install",
+      action: isReinstall ? "app_reopen" : "app_install",
       entity_type: "installation",
       entity_id: installation.id,
       status: "success",
-      request_payload: { event: installData.event, domain: auth.domain },
+      request_payload: { event: installData.event, domain: auth.domain, isReinstall },
       response_payload: { installation_id: installation.id },
     });
 
-    // Return success HTML page that redirects to the app
+    // Build redirect URL
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const iframeUrl = `${supabaseUrl}/functions/v1/bitrix-iframe?member_id=${encodeURIComponent(auth.member_id)}&v=2`;
 
+    // If reinstall: redirect immediately (no success screen)
+    if (isReinstall) {
+      console.log("bitrix-install: reinstall detected, redirecting immediately to:", iframeUrl);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          Location: iframeUrl,
+        },
+      });
+    }
+
+    // First install: show success screen with short delay (500ms)
     const successHtml = `<!DOCTYPE html>
 <html>
   <head>
@@ -390,15 +413,15 @@ serve(async (req) => {
       <p>Redirecionando para o painel...</p>
     </div>
     <script>
-      // Redirect to the main app after 2 seconds
+      // Redirect to the main app after 500ms (quick feedback)
       setTimeout(function() {
         window.location.href = '${iframeUrl}';
-      }, 2000);
+      }, 500);
     </script>
   </body>
 </html>`;
 
-    console.log("bitrix-install: returning success HTML, will redirect to:", iframeUrl);
+    console.log("bitrix-install: first install, showing success HTML, will redirect to:", iframeUrl);
 
     const headers = new Headers({
       ...corsHeaders,
