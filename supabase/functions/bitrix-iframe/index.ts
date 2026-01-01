@@ -138,25 +138,106 @@ serve(async (req) => {
       .single();
 
     const headers = new Headers(corsHeaders);
+    headers.set("content-type", "text/html; charset=utf-8");
     headers.set("cache-control", "no-store, max-age=0");
     headers.set("pragma", "no-cache");
 
-    console.log("bitrix-iframe: served status for tenant", installation.member_id);
+    console.log("bitrix-iframe: serving HTML for tenant", installation.member_id);
 
-    const statusText = [
-      "Conector Omie (Bitrix24 + Omie)",
-      "",
-      `Tenant: ${installation.member_id}`,
-      `Instalação: ${installation.status}`,
-      `Omie: ${omieConfig?.is_active ? "Configurado" : "Pendente (configure App Key/App Secret)"}`,
-      `Robôs: ${installation.robots_registered ? "Registrados" : "Registrando..."}`,
-      "",
-      omieConfig?.is_active
-        ? "Status OK. Você já pode usar os robôs no Bitrix24."
-        : "Próximo passo: configurar as credenciais do Omie no painel do conector.",
-    ].join("\n");
+    const appHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Conector Omie</title>
+  <script src="https://api.bitrix24.com/api/v1/"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0d1f2d 0%,#1a3a4a 100%);min-height:100vh;padding:24px;color:#fff}
+    .container{max-width:900px;margin:0 auto}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(0,212,212,.2);border-radius:16px;padding:24px;margin-bottom:20px;backdrop-filter:blur(10px)}
+    .header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+    .logo{width:56px;height:56px;background:linear-gradient(135deg,#00d4d4 0%,#00a5a5 100%);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#0d1f2d;font-weight:bold;font-size:24px}
+    h1{font-size:26px;color:#fff;font-weight:600}
+    .subtitle{color:rgba(255,255,255,.7);font-size:14px;margin-top:4px}
+    .status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+    .status-item{padding:20px;background:rgba(0,212,212,.08);border:1px solid rgba(0,212,212,.15);border-radius:12px}
+    .status-label{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .status-value{font-size:16px;font-weight:600;color:#fff}
+    .status-value.success{color:#00d4d4}
+    .status-value.warning{color:#f59e0b}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:linear-gradient(135deg,#00d4d4 0%,#00a5a5 100%);color:#0d1f2d;border-radius:10px;font-weight:600;font-size:14px;border:none;cursor:pointer}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,212,212,.3)}
+    .btn-secondary{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+    .warning-box{margin-top:24px;padding:20px;background:rgba(245,158,11,.1);border-radius:12px;border-left:4px solid #f59e0b}
+    .warning-box strong{color:#f59e0b;font-size:15px}
+    .warning-box p{margin-top:8px;color:rgba(255,255,255,.8);font-size:14px;line-height:1.5}
+    h2{font-size:18px;margin-bottom:16px;color:#fff;font-weight:500}
+    .robot-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .robot-badge{padding:6px 12px;background:rgba(0,212,212,.15);border:1px solid rgba(0,212,212,.3);border-radius:20px;font-size:12px;color:#00d4d4}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <div class="logo">O</div>
+        <div>
+          <h1>Conector Omie</h1>
+          <p class="subtitle">Integracao Bitrix24 + Omie ERP</p>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-label">Status</div>
+          <div class="status-value success">Ativo</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Tenant ID</div>
+          <div class="status-value">${installation.member_id.substring(0, 12)}...</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Omie</div>
+          <div class="status-value ${omieConfig?.is_active ? 'success' : 'warning'}">${omieConfig?.is_active ? 'Configurado' : 'Pendente'}</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Robos</div>
+          <div class="status-value ${installation.robots_registered ? 'success' : 'warning'}">${installation.robots_registered ? 'Registrados' : 'Registrando...'}</div>
+        </div>
+      </div>
+      ${!omieConfig?.is_active ? `
+      <div class="warning-box">
+        <strong>Configuracao Pendente</strong>
+        <p>Para usar a integracao, configure suas credenciais do Omie (App Key e App Secret).</p>
+      </div>` : ''}
+      <div class="actions">
+        <button class="btn" onclick="openConfig()">Configurar Omie</button>
+        <button class="btn btn-secondary" onclick="openMappings()">Mapeamentos</button>
+        <button class="btn btn-secondary" onclick="openLogs()">Ver Logs</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Robos Disponiveis</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:14px;margin-bottom:12px;">Use estes robos nos fluxos de automacao do Bitrix24:</p>
+      <div class="robot-list">
+        <span class="robot-badge">Omie: Vendas</span>
+        <span class="robot-badge">Omie: Financeiro</span>
+        <span class="robot-badge">Omie: Estoque</span>
+        <span class="robot-badge">Omie: CRM</span>
+        <span class="robot-badge">Omie: Contratos</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    BX24.init(function(){console.log('BX24 ready')});
+    function openConfig(){BX24.openApplication({bx24_width:800,action:'config'})}
+    function openMappings(){BX24.openApplication({bx24_width:900,action:'mappings'})}
+    function openLogs(){BX24.openApplication({bx24_width:900,action:'logs'})}
+  </script>
+</body>
+</html>`;
 
-    return new Response(statusText, { headers });
+    return new Response(appHtml, { headers });
   } catch (error: unknown) {
     console.error("Iframe handler error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
