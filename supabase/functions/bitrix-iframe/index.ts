@@ -120,7 +120,7 @@ serve(async (req) => {
     }
 
     // Build redirect URL based on action
-    let targetPath = "/";
+    let targetPath = "/crm";
     switch (action) {
       case "config":
         targetPath = "/config";
@@ -131,20 +131,26 @@ serve(async (req) => {
       case "logs":
         targetPath = "/logs";
         break;
-      default:
-        targetPath = "/crm";
     }
 
-    const redirectUrl = `${appUrl}${targetPath}?member_id=${encodeURIComponent(memberId)}${domain ? `&domain=${encodeURIComponent(domain)}` : ""}`;
+    // Use URL object to avoid double-slash issues
+    const redirectUrl = new URL(appUrl);
+    // Normalize: remove trailing slash from pathname, then add targetPath
+    redirectUrl.pathname = redirectUrl.pathname.replace(/\/$/, "") + targetPath;
+    redirectUrl.searchParams.set("member_id", memberId);
+    if (domain) {
+      redirectUrl.searchParams.set("domain", domain);
+    }
     
-    console.log("bitrix-iframe: redirecting to", redirectUrl);
+    console.log("bitrix-iframe: APP_URL =", appUrl);
+    console.log("bitrix-iframe: redirecting to", redirectUrl.toString());
 
     // Return 302 redirect
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        Location: redirectUrl,
+        Location: redirectUrl.toString(),
       },
     });
   } catch (error: unknown) {
