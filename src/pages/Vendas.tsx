@@ -58,7 +58,7 @@ export default function Vendas() {
           icon={TrendingUp}
           variant="success"
           description="8 pedidos"
-          trend={{ value: 15, isPositive: true }}
+          trend={{ value: 15, label: "vs ontem", isPositive: true }}
         />
         <StatsCard
           title="Pedidos Pendentes"
@@ -80,7 +80,7 @@ export default function Vendas() {
           icon={ShoppingCart}
           variant="default"
           description="Média mensal"
-          trend={{ value: 8, isPositive: true }}
+          trend={{ value: 8, label: "vs mês anterior", isPositive: true }}
         />
       </div>
 

@@ -71,7 +71,7 @@ export default function CRM() {
           icon={Target}
           variant="success"
           description="Em andamento"
-          trend={{ value: 15, isPositive: true }}
+          trend={{ value: 15, label: "vs mês anterior", isPositive: true }}
         />
         <StatsCard
           title="Pipeline"

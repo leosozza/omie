@@ -73,7 +73,7 @@ export default function Estoque() {
           icon={ArrowUpDown}
           variant="success"
           description="Entradas e saídas"
-          trend={{ value: 12, isPositive: true }}
+          trend={{ value: 12, label: "vs ontem", isPositive: true }}
         />
       </div>
 
