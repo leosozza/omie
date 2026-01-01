@@ -347,18 +347,63 @@ serve(async (req) => {
       response_payload: { installation_id: installation.id },
     });
 
-    // Return success response for Bitrix
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Application installed successfully",
-        installation_id: installation.id,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+    // Return success HTML page that redirects to the app
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const iframeUrl = `${supabaseUrl}/functions/v1/bitrix-iframe?member_id=${encodeURIComponent(auth.member_id)}`;
+
+    const successHtml = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Conector Omie - Instalado</title>
+    <script src="https://api.bitrix24.com/api/v1/"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
       }
-    );
+      .container {
+        text-align: center;
+        padding: 40px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+      }
+      .success-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+      }
+      h1 { margin: 0 0 8px 0; font-size: 24px; }
+      p { margin: 0; opacity: 0.9; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="success-icon">✓</div>
+      <h1>Aplicativo instalado com sucesso!</h1>
+      <p>Redirecionando para o painel...</p>
+    </div>
+    <script>
+      // Redirect to the main app after 2 seconds
+      setTimeout(function() {
+        window.location.href = '${iframeUrl}';
+      }, 2000);
+    </script>
+  </body>
+</html>`;
+
+    console.log("bitrix-install: returning success HTML, will redirect to:", iframeUrl);
+
+    return new Response(successHtml, {
+      headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" },
+      status: 200,
+    });
   } catch (error: unknown) {
     console.error("Install error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
