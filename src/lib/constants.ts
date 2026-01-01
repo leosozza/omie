@@ -30,35 +30,72 @@ export const SYNC_STATUS_LABELS: Record<string, { label: string; color: string }
   retrying: { label: "Tentando novamente", color: "warning" },
 };
 
-export const ROBOTS = [
+export const MULTI_ROBOTS = [
   {
-    code: "OMIE_CREATE_ORDER",
-    name: "Gerar Pedido na Omie",
-    description: "Cria um Pedido de Venda na Omie a partir do Negócio",
+    code: "OMIE_VENDAS",
+    name: "Omie: Vendas",
+    description: "Pedidos, OS, Faturamento e Notas Fiscais",
     icon: "ShoppingCart",
+    actions: [
+      { value: "criar_pedido", label: "Gerar Pedido de Venda" },
+      { value: "criar_os", label: "Gerar Ordem de Serviço" },
+      { value: "faturar_pedido", label: "Faturar Pedido" },
+      { value: "faturar_os", label: "Faturar OS" },
+      { value: "obter_nfe", label: "Obter NF-e (PDF/XML)" },
+      { value: "obter_nfse", label: "Obter NFS-e (PDF/XML)" },
+    ],
   },
   {
-    code: "OMIE_CREATE_SERVICE_ORDER",
-    name: "Gerar OS na Omie",
-    description: "Cria uma Ordem de Serviço na Omie a partir do Negócio",
-    icon: "Wrench",
-  },
-  {
-    code: "OMIE_CHECK_PAYMENT",
-    name: "Consultar Status Financeiro",
-    description: "Verifica se o título está aberto, liquidado ou atrasado",
+    code: "OMIE_FINANCEIRO",
+    name: "Omie: Financeiro",
+    description: "Boletos, PIX, Cobranças e Títulos",
     icon: "CreditCard",
+    actions: [
+      { value: "gerar_boleto", label: "Gerar Boleto (Omie.Cash)" },
+      { value: "gerar_pix", label: "Gerar QR Code PIX" },
+      { value: "consultar_pagamento", label: "Consultar Status de Pagamento" },
+      { value: "baixar_titulo", label: "Baixar Título Manualmente" },
+      { value: "prorrogar_boleto", label: "Prorrogar Vencimento" },
+      { value: "verificar_inadimplencia", label: "Verificar Inadimplência do Cliente" },
+    ],
   },
   {
-    code: "OMIE_GET_INVOICE",
-    name: "Obter Nota Fiscal (PDF)",
-    description: "Busca o PDF da NF-e ou NFS-e relacionada",
-    icon: "FileText",
-  },
-  {
-    code: "OMIE_SYNC_STOCK",
-    name: "Sincronizar Estoque",
-    description: "Atualiza quantidade disponível baseado na Omie",
+    code: "OMIE_ESTOQUE",
+    name: "Omie: Estoque",
+    description: "Posição, Reservas e Preços",
     icon: "Package",
+    actions: [
+      { value: "consultar_estoque", label: "Consultar Estoque Disponível" },
+      { value: "reservar_produtos", label: "Reservar Produtos" },
+      { value: "atualizar_precos", label: "Sincronizar Preços" },
+      { value: "alertar_minimo", label: "Verificar Estoque Mínimo" },
+    ],
+  },
+  {
+    code: "OMIE_CLIENTES",
+    name: "Omie: Clientes/CRM",
+    description: "Sincronização e Histórico de Clientes",
+    icon: "Users",
+    actions: [
+      { value: "sincronizar_cliente", label: "Sincronizar Cliente" },
+      { value: "consultar_historico", label: "Consultar Histórico de Compras" },
+      { value: "verificar_credito", label: "Verificar Limite de Crédito" },
+      { value: "obter_contatos", label: "Obter Contatos do Cliente" },
+    ],
+  },
+  {
+    code: "OMIE_CONTRATOS",
+    name: "Omie: Contratos",
+    description: "Recorrência e Faturamento de Contratos",
+    icon: "FileText",
+    actions: [
+      { value: "criar_contrato", label: "Criar Contrato de Recorrência" },
+      { value: "faturar_contrato", label: "Faturar Contrato do Mês" },
+      { value: "consultar_renovacao", label: "Consultar Renovações Pendentes" },
+      { value: "cancelar_contrato", label: "Cancelar Contrato" },
+    ],
   },
 ] as const;
+
+export type MultiRobot = typeof MULTI_ROBOTS[number];
+export type RobotAction = MultiRobot["actions"][number];
