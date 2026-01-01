@@ -63,7 +63,7 @@ export default function Contratos() {
           icon={DollarSign}
           variant="info"
           description="Receita recorrente"
-          trend={{ value: 8, isPositive: true }}
+          trend={{ value: 8, label: "vs mês anterior", isPositive: true }}
         />
         <StatsCard
           title="Renovações"

@@ -103,7 +103,7 @@ export default function Financas() {
           icon={ArrowUpCircle}
           variant="success"
           description="Próximos 30 dias"
-          trend={{ value: 12, isPositive: true }}
+          trend={{ value: 12, label: "vs mês anterior", isPositive: true }}
         />
         <StatsCard
           title="A Pagar"
@@ -111,7 +111,7 @@ export default function Financas() {
           icon={ArrowDownCircle}
           variant="error"
           description="Próximos 30 dias"
-          trend={{ value: 5, isPositive: false }}
+          trend={{ value: 5, label: "vs mês anterior", isPositive: false }}
         />
         <StatsCard
           title="Boletos Pendentes"
@@ -126,7 +126,7 @@ export default function Financas() {
           icon={QrCode}
           variant="info"
           description="Este mês"
-          trend={{ value: 23, isPositive: true }}
+          trend={{ value: 23, label: "vs mês anterior", isPositive: true }}
         />
       </div>
 
