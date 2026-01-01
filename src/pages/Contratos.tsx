@@ -122,48 +122,12 @@ export default function Contratos() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { id: "CTR-001", cliente: "Tech Solutions S.A.", servico: "Suporte Premium 24/7", valor: 8500, vencimento: "2024-12-31", status: "ativo" },
-                  { id: "CTR-002", cliente: "Empresa ABC Ltda", servico: "Manutenção Mensal", valor: 3200, vencimento: "2024-06-15", status: "ativo" },
-                  { id: "CTR-003", cliente: "Distribuidora 123", servico: "Consultoria TI", valor: 12000, vencimento: "2024-03-01", status: "renovar" },
-                ].map((contrato) => (
-                  <div
-                    key={contrato.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${contrato.status === "renovar" ? "bg-warning/20" : "bg-module-servicos/20"}`}>
-                        <FileText className={`h-5 w-5 ${contrato.status === "renovar" ? "text-warning" : "text-module-servicos"}`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{contrato.id}</p>
-                          {contrato.status === "renovar" && (
-                            <Badge variant="secondary" className="bg-warning/20 text-warning">
-                              Renovar
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm font-medium">{contrato.cliente}</p>
-                        <p className="text-sm text-muted-foreground">{contrato.servico}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {contrato.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/mês
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Vigência até {new Date(contrato.vencimento).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        Faturar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum contrato ativo</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para visualizar os contratos
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -179,39 +143,12 @@ export default function Contratos() {
               <CardDescription>Contratos com vencimento próximo</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { id: "CTR-003", cliente: "Distribuidora 123", servico: "Consultoria TI", valor: 12000, vencimento: "2024-03-01", diasRestantes: 45 },
-                  { id: "CTR-008", cliente: "Startup XYZ", servico: "Desenvolvimento", valor: 25000, vencimento: "2024-02-15", diasRestantes: 30 },
-                ].map((contrato) => (
-                  <div
-                    key={contrato.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-warning/30 bg-warning/5"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-warning/20">
-                        <Calendar className="h-5 w-5 text-warning" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{contrato.cliente}</p>
-                        <p className="text-sm text-muted-foreground">{contrato.servico}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {contrato.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/mês
-                        </p>
-                        <Badge variant="secondary" className="bg-warning/20 text-warning">
-                          {contrato.diasRestantes} dias restantes
-                        </Badge>
-                      </div>
-                      <Button size="sm">
-                        Renovar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Calendar className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum contrato para renovar</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Contratos próximos do vencimento aparecerão aqui
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -232,35 +169,12 @@ export default function Contratos() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { id: "CTR-001", cliente: "Tech Solutions S.A.", valor: 8500, competencia: "Janeiro/2024" },
-                  { id: "CTR-002", cliente: "Empresa ABC Ltda", valor: 3200, competencia: "Janeiro/2024" },
-                  { id: "CTR-005", cliente: "Indústria XYZ", valor: 15800, competencia: "Janeiro/2024" },
-                ].map((contrato) => (
-                  <div
-                    key={contrato.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-module-financas/20">
-                        <DollarSign className="h-5 w-5 text-module-financas" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{contrato.cliente}</p>
-                        <p className="text-sm text-muted-foreground">{contrato.competencia}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <p className="font-semibold">
-                        {contrato.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </p>
-                      <Button size="sm" variant="outline">
-                        Faturar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <DollarSign className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum contrato pendente</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Contratos prontos para faturar aparecerão aqui
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -273,38 +187,12 @@ export default function Contratos() {
               <CardDescription>NFS-e emitidas para contratos</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { nfse: "000001234", cliente: "Tech Solutions S.A.", valor: 8500, data: "2024-01-05", status: "autorizada" },
-                  { nfse: "000001233", cliente: "Empresa ABC Ltda", valor: 3200, data: "2024-01-05", status: "autorizada" },
-                  { nfse: "000001230", cliente: "Tech Solutions S.A.", valor: 8500, data: "2023-12-05", status: "autorizada" },
-                ].map((nfse, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-module-financas/20">
-                        <CheckCircle2 className="h-5 w-5 text-module-financas" />
-                      </div>
-                      <div>
-                        <p className="font-medium">NFS-e {nfse.nfse}</p>
-                        <p className="text-sm text-muted-foreground">{nfse.cliente}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {nfse.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(nfse.data).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <Badge>Autorizada</Badge>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <CheckCircle2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhuma NFS-e no histórico</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  NFS-e emitidas para contratos aparecerão aqui
+                </p>
               </div>
             </CardContent>
           </Card>

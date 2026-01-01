@@ -121,69 +121,12 @@ export default function Vendas() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { id: "PV-001234", cliente: "Empresa ABC Ltda", valor: 5200, data: "2024-01-15", status: "faturado" },
-                  { id: "PV-001235", cliente: "João Silva ME", valor: 1800, data: "2024-01-15", status: "pendente" },
-                  { id: "PV-001236", cliente: "Tech Solutions", valor: 12500, data: "2024-01-14", status: "faturando" },
-                  { id: "PV-001237", cliente: "Distribuidora 123", valor: 8900, data: "2024-01-14", status: "faturado" },
-                ].map((pedido) => (
-                  <div
-                    key={pedido.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${
-                        pedido.status === "faturado" ? "bg-module-financas/20" :
-                        pedido.status === "faturando" ? "bg-module-vendas/20" :
-                        "bg-muted"
-                      }`}>
-                        {pedido.status === "faturado" ? (
-                          <CheckCircle2 className="h-5 w-5 text-module-financas" />
-                        ) : pedido.status === "faturando" ? (
-                          <RefreshCw className="h-5 w-5 text-module-vendas animate-spin" />
-                        ) : (
-                          <Clock className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{pedido.id}</p>
-                          <Badge variant={
-                            pedido.status === "faturado" ? "default" :
-                            pedido.status === "faturando" ? "secondary" :
-                            "outline"
-                          }>
-                            {pedido.status === "faturado" ? "Faturado" :
-                             pedido.status === "faturando" ? "Faturando" :
-                             "Pendente"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{pedido.cliente}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {pedido.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(pedido.data).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {pedido.status === "faturado" && (
-                          <Button size="sm" variant="ghost">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum pedido encontrado</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para visualizar os pedidos
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -217,45 +160,12 @@ export default function Vendas() {
               <CardDescription>NF-e emitidas via Omie</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { numero: "000123456", cliente: "Empresa ABC Ltda", valor: 5200, data: "2024-01-15", status: "autorizada" },
-                  { numero: "000123455", cliente: "Distribuidora 123", valor: 8900, data: "2024-01-14", status: "autorizada" },
-                  { numero: "000123454", cliente: "Tech Solutions", valor: 3200, data: "2024-01-13", status: "cancelada" },
-                ].map((nfe) => (
-                  <div
-                    key={nfe.numero}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${nfe.status === "cancelada" ? "bg-destructive/20" : "bg-module-financas/20"}`}>
-                        <FileText className={`h-5 w-5 ${nfe.status === "cancelada" ? "text-destructive" : "text-module-financas"}`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">NF-e {nfe.numero}</p>
-                          <Badge variant={nfe.status === "cancelada" ? "destructive" : "default"}>
-                            {nfe.status === "cancelada" ? "Cancelada" : "Autorizada"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{nfe.cliente}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {nfe.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(nfe.data).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <Button size="sm" variant="ghost">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhuma NF-e encontrada</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para visualizar as notas fiscais
+                </p>
               </div>
             </CardContent>
           </Card>

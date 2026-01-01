@@ -173,58 +173,12 @@ export default function Financas() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {/* Sample data - would come from API */}
-                {[
-                  { id: "1", cliente: "Empresa ABC Ltda", valor: 5200, vencimento: "2024-01-15", status: "aberto" },
-                  { id: "2", cliente: "João Silva ME", valor: 1800, vencimento: "2024-01-10", status: "vencido" },
-                  { id: "3", cliente: "Tech Solutions", valor: 12500, vencimento: "2024-01-20", status: "aberto" },
-                ].map((titulo) => (
-                  <div
-                    key={titulo.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${titulo.status === "vencido" ? "bg-destructive/20" : "bg-module-financas/20"}`}>
-                        <DollarSign className={`h-5 w-5 ${titulo.status === "vencido" ? "text-destructive" : "text-module-financas"}`} />
-                      </div>
-                      <div>
-                        <p className="font-medium">{titulo.cliente}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Vencimento: {new Date(titulo.vencimento).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold text-lg">
-                          {titulo.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <Badge variant={titulo.status === "vencido" ? "destructive" : "secondary"}>
-                          {titulo.status === "vencido" ? "Vencido" : "Em aberto"}
-                        </Badge>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => generateBoleto.mutate(titulo.id)}
-                          disabled={generateBoleto.isPending}
-                        >
-                          <CreditCard className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => generatePix.mutate(titulo.id)}
-                          disabled={generatePix.isPending}
-                        >
-                          <QrCode className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <DollarSign className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum título a receber</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para visualizar os títulos
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -237,34 +191,12 @@ export default function Financas() {
               <CardDescription>Títulos pendentes de pagamento</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { id: "1", fornecedor: "Fornecedor XYZ", valor: 3200, vencimento: "2024-01-12", status: "aberto" },
-                  { id: "2", fornecedor: "Distribuidora 123", valor: 8900, vencimento: "2024-01-18", status: "aberto" },
-                ].map((titulo) => (
-                  <div
-                    key={titulo.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-destructive/20">
-                        <ArrowDownCircle className="h-5 w-5 text-destructive" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{titulo.fornecedor}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Vencimento: {new Date(titulo.vencimento).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-lg">
-                        {titulo.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </p>
-                      <Badge variant="secondary">Em aberto</Badge>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <ArrowDownCircle className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum título a pagar</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para visualizar os títulos
+                </p>
               </div>
             </CardContent>
           </Card>
