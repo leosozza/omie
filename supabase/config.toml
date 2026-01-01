@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.omie-robot-handler]
 verify_jwt = false
+
+[functions.bitrix-discover-fields]
+verify_jwt = false
+
+[functions.omie-discover-fields]
+verify_jwt = false
