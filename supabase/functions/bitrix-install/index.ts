@@ -140,8 +140,13 @@ serve(async (req) => {
           const authId = params.get("AUTH_ID") || params.get("access_token");
           const refreshId = params.get("REFRESH_ID") || params.get("refresh_token");
           const memberId = params.get("member_id") || params.get("MEMBER_ID");
-          const domain = params.get("DOMAIN") || params.get("domain") || "";
+          let domain = params.get("DOMAIN") || params.get("domain") || "";
           const serverEndpoint = params.get("SERVER_ENDPOINT") || params.get("server_endpoint") || "";
+          
+          // Extract domain from SERVER_ENDPOINT if DOMAIN is empty
+          if (!domain && serverEndpoint) {
+            try { domain = new URL(serverEndpoint).hostname; } catch { /* ignore */ }
+          }
           
           console.log(`bitrix-install: checking FLAT params - AUTH_ID=${!!authId} member_id=${!!memberId} domain=${domain}`);
           
@@ -361,15 +366,27 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const iframeUrl = `${supabaseUrl}/functions/v1/bitrix-iframe?member_id=${encodeURIComponent(auth.member_id)}&v=2`;
 
-    // If reinstall: redirect immediately (no success screen)
+    // If reinstall: redirect via HTML+JS (not raw 302, which can be blocked in iframe)
     if (isReinstall) {
-      console.log("bitrix-install: reinstall detected, redirecting immediately to:", iframeUrl);
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          Location: iframeUrl,
-        },
+      console.log("bitrix-install: reinstall detected, redirecting via HTML to:", iframeUrl);
+      const reinstallHtml = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Conector Omie</title>
+    <script src="https://api.bitrix24.com/api/v1/"></script>
+  </head>
+  <body>
+    <script>
+      BX24.init(function() {
+        window.location.href = '${iframeUrl}';
+      });
+    </script>
+  </body>
+</html>`;
+      return new Response(new TextEncoder().encode(reinstallHtml), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, max-age=0" },
       });
     }
 
@@ -413,10 +430,12 @@ serve(async (req) => {
       <p>Redirecionando para o painel...</p>
     </div>
     <script>
-      // Redirect to the main app after 500ms (quick feedback)
-      setTimeout(function() {
-        window.location.href = '${iframeUrl}';
-      }, 500);
+      BX24.init(function() {
+        BX24.installFinish();
+        setTimeout(function() {
+          window.location.href = '${iframeUrl}';
+        }, 500);
+      });
     </script>
   </body>
 </html>`;
