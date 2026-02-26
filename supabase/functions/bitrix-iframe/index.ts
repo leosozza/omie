@@ -96,6 +96,16 @@ serve(async (req) => {
       .single();
 
     if (installation) {
+      // Fix client_endpoint if it points to oauth.bitrix.info
+      if (installation.client_endpoint?.includes("oauth.bitrix.info") && installation.domain && installation.domain !== "oauth.bitrix.info") {
+        installation.client_endpoint = `https://${installation.domain}/rest/`;
+        console.log(`bitrix-iframe: fixed client_endpoint to ${installation.client_endpoint}`);
+        await supabase
+          .from("bitrix_installations")
+          .update({ client_endpoint: installation.client_endpoint, robots_registered: false })
+          .eq("member_id", memberId);
+      }
+
       // Check if token needs refresh
       const expiresAt = new Date(installation.expires_at);
       const now = new Date();
