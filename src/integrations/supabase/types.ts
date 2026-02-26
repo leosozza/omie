@@ -82,6 +82,7 @@ export type Database = {
           id: string
           installed_at: string | null
           member_id: string
+          placements_registered: boolean | null
           refresh_token: string | null
           robots_registered: boolean | null
           status: Database["public"]["Enums"]["installation_status"]
@@ -97,6 +98,7 @@ export type Database = {
           id?: string
           installed_at?: string | null
           member_id: string
+          placements_registered?: boolean | null
           refresh_token?: string | null
           robots_registered?: boolean | null
           status?: Database["public"]["Enums"]["installation_status"]
@@ -112,6 +114,7 @@ export type Database = {
           id?: string
           installed_at?: string | null
           member_id?: string
+          placements_registered?: boolean | null
           refresh_token?: string | null
           robots_registered?: boolean | null
           status?: Database["public"]["Enums"]["installation_status"]

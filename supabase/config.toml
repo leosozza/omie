@@ -59,3 +59,6 @@ verify_jwt = false
 
 [functions.omie-multi-robot]
 verify_jwt = false
+
+[functions.omie-placement]
+verify_jwt = false
