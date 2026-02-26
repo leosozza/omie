@@ -62,8 +62,9 @@ function parsePhpArrayNotation(params: URLSearchParams): Record<string, unknown>
 serve(async (req) => {
   const method = req.method;
   const contentType = req.headers.get("content-type") || "";
+  const refererHeader = req.headers.get("referer") || req.headers.get("origin") || "";
 
-  console.log(`bitrix-install: method=${method} content-type=${contentType}`);
+  console.log(`bitrix-install: method=${method} content-type=${contentType} referer=${refererHeader}`);
 
   // Handle CORS preflight
   if (method === "OPTIONS") {
@@ -296,6 +297,63 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Try to resolve the real portal domain
+    let resolvedDomain = auth.domain || "";
+    
+    // Strategy 1: Extract from Referer/Origin header (most reliable)
+    if (!resolvedDomain || resolvedDomain === "oauth.bitrix.info") {
+      if (refererHeader) {
+        try {
+          const refHost = new URL(refererHeader).hostname;
+          if (refHost && refHost !== "oauth.bitrix.info" && refHost.includes("bitrix24")) {
+            resolvedDomain = refHost;
+            console.log(`bitrix-install: domain from Referer: ${resolvedDomain}`);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+    
+    // Strategy 2: Call Bitrix24 REST API to discover portal
+    if (!resolvedDomain || resolvedDomain === "oauth.bitrix.info") {
+      try {
+        console.log(`bitrix-install: resolving domain via REST API`);
+        const resp = await fetch(`https://oauth.bitrix.info/rest/app.info?auth=${auth.access_token}`);
+        if (resp.ok) {
+          const info = await resp.json();
+          console.log(`bitrix-install: app.info result: ${JSON.stringify(info?.result || {}).substring(0, 200)}`);
+        }
+        
+        // Try server.time which returns the portal URL in the response
+        const resp2 = await fetch(`https://oauth.bitrix.info/rest/server.time?auth=${auth.access_token}`);
+        if (resp2.ok) {
+          const timeInfo = await resp2.json();
+          console.log(`bitrix-install: server.time result: ${JSON.stringify(timeInfo).substring(0, 200)}`);
+        }
+      } catch (e) {
+        console.log(`bitrix-install: REST domain resolution failed: ${e instanceof Error ? e.message : "unknown"}`);
+      }
+    }
+
+    // Strategy 3: Use previously saved domain
+    if (!resolvedDomain || resolvedDomain === "oauth.bitrix.info") {
+      const { data: prevInstall } = await supabase
+        .from("bitrix_installations")
+        .select("domain")
+        .eq("member_id", auth.member_id)
+        .maybeSingle();
+      
+      if (prevInstall?.domain && prevInstall.domain !== "oauth.bitrix.info" && prevInstall.domain !== "") {
+        resolvedDomain = prevInstall.domain;
+        console.log(`bitrix-install: using previously saved domain: ${resolvedDomain}`);
+      }
+    }
+    
+    // Override auth.domain with resolved value
+    if (resolvedDomain && resolvedDomain !== "oauth.bitrix.info") {
+      auth.domain = resolvedDomain;
+    }
+    console.log(`bitrix-install: final domain=${auth.domain}`);
 
     // Check if this is a reinstall (member_id already exists)
     const { data: existingInstall } = await supabase
