@@ -70,7 +70,8 @@ async function getInstallation(supabase: any, memberId: string) {
 async function handleVendas(
   action: string,
   dealData: Record<string, unknown>,
-  credentials: { app_key: string; app_secret: string }
+  credentials: { app_key: string; app_secret: string },
+  installation?: { client_endpoint: string; access_token: string }
 ) {
   const { app_key, app_secret } = credentials;
 
@@ -146,6 +147,32 @@ async function handleVendas(
       const result = await callOmieApi(app_key, app_secret, "produtos/nfconsultar", "ConsultarNF", {
         nCodPed: Number(orderId),
       });
+
+      // Save PDF URL to deal and add timeline comment
+      if (result.cLinkDanfe && installation) {
+        try {
+          await callBitrixApi(installation.client_endpoint, installation.access_token,
+            "crm.deal.update", {
+              id: dealData.ID,
+              fields: {
+                UF_CRM_OMIE_NF_URL: result.cLinkDanfe,
+                UF_CRM_OMIE_NF_NUMBER: result.nNF?.toString(),
+              }
+            });
+
+          await callBitrixApi(installation.client_endpoint, installation.access_token,
+            "crm.timeline.comment.add", {
+              fields: {
+                ENTITY_ID: dealData.ID,
+                ENTITY_TYPE: "deal",
+                COMMENT: `📄 NF-e #${result.nNF} emitida com sucesso.\n\n📥 DANFE (PDF): ${result.cLinkDanfe}`,
+              }
+            });
+        } catch (e) {
+          console.error("Erro ao salvar NF-e no deal:", e);
+        }
+      }
+
       return {
         status: result.cLinkDanfe ? "success" : "error",
         id: result.nNF?.toString() || "",
@@ -162,6 +189,32 @@ async function handleVendas(
       const result = await callOmieApi(app_key, app_secret, "servicos/nfse", "ConsultarNFSe", {
         nCodOS: Number(osId),
       });
+
+      // Save PDF URL to deal and add timeline comment
+      if (result.cLinkNFSe && installation) {
+        try {
+          await callBitrixApi(installation.client_endpoint, installation.access_token,
+            "crm.deal.update", {
+              id: dealData.ID,
+              fields: {
+                UF_CRM_OMIE_NF_URL: result.cLinkNFSe,
+                UF_CRM_OMIE_NF_NUMBER: result.nNFSe?.toString(),
+              }
+            });
+
+          await callBitrixApi(installation.client_endpoint, installation.access_token,
+            "crm.timeline.comment.add", {
+              fields: {
+                ENTITY_ID: dealData.ID,
+                ENTITY_TYPE: "deal",
+                COMMENT: `📄 NFS-e #${result.nNFSe} emitida com sucesso.\n\n📥 PDF da NFS-e: ${result.cLinkNFSe}`,
+              }
+            });
+        } catch (e) {
+          console.error("Erro ao salvar NFS-e no deal:", e);
+        }
+      }
+
       return {
         status: result.cLinkNFSe ? "success" : "error",
         id: result.nNFSe?.toString() || "",
@@ -591,7 +644,7 @@ serve(async (req) => {
 
     switch (robotCode) {
       case "OMIE_VENDAS":
-        result = await handleVendas(action as string, dealData, omieCredentials);
+        result = await handleVendas(action as string, dealData, omieCredentials, installation);
         break;
       case "OMIE_FINANCEIRO":
         result = await handleFinanceiro(action as string, dealData, omieCredentials);
