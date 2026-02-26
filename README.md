@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# Omie × Bitrix24 Connector
 
-## Project info
+Conector de integração entre **Omie ERP** e **Bitrix24 CRM**, automatizando vendas, finanças, estoque, contratos e emissão de notas fiscais.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Visão Geral
 
-## How can I edit this code?
+Este projeto conecta o Omie ERP ao Bitrix24 CRM através de robots automatizados, permitindo:
 
-There are several ways of editing your application.
+- 🛒 **Vendas** — Criar pedidos, faturar e obter NF-e/NFS-e com PDF oficial
+- 💰 **Finanças** — Gerar boletos, PIX, consultar pagamentos e inadimplência
+- 📦 **Estoque** — Consultar posição, reservar produtos e alertas de mínimo
+- 📋 **Contratos** — Criar, faturar e gerenciar renovações
+- 👥 **CRM** — Sincronizar clientes, histórico e crédito
+- 🧾 **Contador** — Módulo contábil integrado
 
-**Use Lovable**
+## Arquitetura
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+```
+Bitrix24 (CRM) ←→ Edge Functions ←→ Omie (ERP)
+                       ↕
+                   Supabase (DB)
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+### Robots Multi-Função
 
-**Use your preferred IDE**
+O conector utiliza 5 robots "guarda-chuva" no Bitrix24:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+| Robot | Módulo | Ações |
+|-------|--------|-------|
+| `OMIE_VENDAS` | Vendas | criar_pedido, faturar, obter_nfe/nfse |
+| `OMIE_FINANCEIRO` | Finanças | boleto, pix, pagamentos |
+| `OMIE_ESTOQUE` | Estoque | consulta, reserva, alertas |
+| `OMIE_CLIENTES` | CRM | sincronizar, histórico, crédito |
+| `OMIE_CONTRATOS` | Contratos | criar, faturar, renovar |
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Emissão de Nota Fiscal
 
-Follow these steps:
+O fluxo de NF funciona assim:
+
+1. Robot cria pedido/OS no Omie
+2. Robot fatura (etapa 50) → Omie emite NF junto à SEFAZ/Prefeitura
+3. Robot `obter_nfe`/`obter_nfse` busca o PDF oficial
+4. Link do PDF é salvo no deal e adicionado à timeline do Bitrix24
+
+## Stack Tecnológica
+
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Backend**: Supabase Edge Functions (Deno)
+- **Banco de Dados**: PostgreSQL (Supabase)
+- **APIs**: Omie REST API + Bitrix24 REST API
+
+## Desenvolvimento Local
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clonar o repositório
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Entrar no diretório
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Instalar dependências
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Iniciar servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Edge Functions
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Função | Descrição |
+|--------|-----------|
+| `omie-multi-robot` | Handler principal dos robots |
+| `omie-validate` | Validação de credenciais Omie |
+| `omie-webhook` | Webhook para eventos do Omie |
+| `omie-invoice-handler` | Gestão de notas fiscais |
+| `bitrix-install` | Instalação do app no Bitrix24 |
+| `bitrix-iframe` | Interface embarcada no Bitrix24 |
+| `bitrix-discover-fields` | Descoberta de campos do CRM |
 
-**Use GitHub Codespaces**
+## Estrutura do Projeto
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+src/
+├── components/       # Componentes React
+├── pages/            # Páginas da aplicação
+├── hooks/            # Custom hooks
+├── lib/              # Utilitários e constantes
+└── integrations/     # Cliente Supabase
 
-## What technologies are used for this project?
+supabase/
+├── functions/        # Edge Functions
+├── migrations/       # Migrações do banco
+└── config.toml       # Configuração
+```
 
-This project is built with:
+## Licença
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Projeto proprietário — uso restrito.
