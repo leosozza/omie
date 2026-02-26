@@ -62,6 +62,13 @@ export type Database = {
             referencedRelation: "bitrix_installations"
             referencedColumns: ["member_id"]
           },
+          {
+            foreignKeyName: "bitrix_cached_fields_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
         ]
       }
       bitrix_installations: {
@@ -181,6 +188,13 @@ export type Database = {
             referencedRelation: "bitrix_installations"
             referencedColumns: ["member_id"]
           },
+          {
+            foreignKeyName: "field_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
         ]
       }
       integration_logs: {
@@ -231,6 +245,13 @@ export type Database = {
             referencedRelation: "bitrix_installations"
             referencedColumns: ["member_id"]
           },
+          {
+            foreignKeyName: "integration_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
         ]
       }
       omie_cached_fields: {
@@ -273,6 +294,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "bitrix_installations"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "omie_cached_fields_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
             referencedColumns: ["member_id"]
           },
         ]
@@ -322,6 +350,13 @@ export type Database = {
             referencedRelation: "bitrix_installations"
             referencedColumns: ["member_id"]
           },
+          {
+            foreignKeyName: "omie_configurations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
         ]
       }
       robots_registry: {
@@ -364,6 +399,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "bitrix_installations"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "robots_registry_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
             referencedColumns: ["member_id"]
           },
         ]
@@ -425,6 +467,13 @@ export type Database = {
             referencedRelation: "bitrix_installations"
             referencedColumns: ["member_id"]
           },
+          {
+            foreignKeyName: "sync_queue_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
         ]
       }
       user_roles: {
@@ -457,11 +506,53 @@ export type Database = {
             referencedRelation: "bitrix_installations"
             referencedColumns: ["member_id"]
           },
+          {
+            foreignKeyName: "user_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      bitrix_installations_safe: {
+        Row: {
+          domain: string | null
+          expires_at: string | null
+          fields_provisioned: boolean | null
+          id: string | null
+          installed_at: string | null
+          member_id: string | null
+          robots_registered: boolean | null
+          status: Database["public"]["Enums"]["installation_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          domain?: string | null
+          expires_at?: string | null
+          fields_provisioned?: boolean | null
+          id?: string | null
+          installed_at?: string | null
+          member_id?: string | null
+          robots_registered?: boolean | null
+          status?: Database["public"]["Enums"]["installation_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          domain?: string | null
+          expires_at?: string | null
+          fields_provisioned?: boolean | null
+          id?: string | null
+          installed_at?: string | null
+          member_id?: string | null
+          robots_registered?: boolean | null
+          status?: Database["public"]["Enums"]["installation_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
