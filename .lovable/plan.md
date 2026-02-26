@@ -1,92 +1,97 @@
 
 
-## Situacao Atual
+## Revisao UX Design - Alinhar com Bitrix24
 
-Os robots `obter_nfe` e `obter_nfse` no `omie-multi-robot` ja buscam o link do PDF da NF via API Omie (`ConsultarNF` / `ConsultarNFSe`), mas apenas retornam o link como `result_url` nos `return_values` do robot. O link nao e salvo no deal nem enviado ao cliente.
+### Analise do Bitrix24 UI
 
-## Fluxo da Emissao de NF
+O Bitrix24 UI usa:
+- **Fundo claro** (branco/cinza claro `#f5f7f8`), nao dark
+- **Sidebar com gradiente azul** (de `#2FC6F6` para `#1B87C8`) com icones brancos
+- **Header com gradiente azul** similar ao sidebar
+- **Cards brancos** com bordas sutis `#e5e7eb`
+- **Botoes** com estilo pill/rounded, cores azul primario
+- **Tipografia** limpa, sans-serif, dark text em fundo claro
+- **Badges** coloridos com fundo suave
+- **Radius** mais arredondado (8-12px)
 
-```text
-Bitrix24 Deal
-    │
-    ├─ Robot OMIE_VENDAS: criar_pedido → Cria pedido no Omie
-    ├─ Robot OMIE_VENDAS: faturar_pedido → Muda etapa para "Faturar" (etapa 50)
-    │   └─ Omie emite a NF-e/NFS-e junto à prefeitura/SEFAZ
-    ├─ Robot OMIE_VENDAS: obter_nfe → Busca link do DANFE (PDF oficial)
-    │   └─ HOJE: retorna URL mas NAO salva no deal
-    │
-    └─ PROPOSTA: Salvar URL no deal + criar atividade/timeline
-```
+### Mudancas Necessarias
 
-## Metodo Utilizado para PDF
+#### 1. Reescrever CSS Variables (`src/index.css`)
+Trocar todo o tema dark Omie para tema light Bitrix24:
+- Background: branco/cinza claro
+- Foreground: texto escuro (#1a1a2e)
+- Primary: azul Bitrix (#2FC6F6 / #428BCA)
+- Cards: branco com bordas suaves
+- Sidebar: gradiente azul Bitrix
+- Remover gradientes Omie (gradient-omie, gradient-primary cyan)
+- Substituir por gradientes Bitrix (azul linear-gradient)
+- Atualizar cores dos modulos para paleta Bitrix
 
-- **NF-e (produtos)**: `ConsultarNF` com `nCodPed` → retorna `cLinkDanfe` (PDF do DANFE oficial da SEFAZ)
-- **NFS-e (servicos)**: `ConsultarNFSe` com `nCodOS` → retorna `cLinkNFSe` (PDF da NFS-e oficial da prefeitura)
+#### 2. Atualizar Sidebar (`src/components/layout/AppSidebar.tsx`)
+- Sidebar com fundo gradiente azul (#2988ef → #1b6ec2)
+- Texto e icones brancos
+- Item ativo com fundo branco/translucido
+- Hover com fundo branco/translucido mais sutil
+- Remover cores de modulo por icone na sidebar
 
-Estes sao links oficiais gerados apos autorizacao fiscal, nao previews.
+#### 3. Atualizar Layout (`src/components/layout/DashboardLayout.tsx`)
+- Header com fundo branco e borda inferior cinza
+- Remover backdrop-blur excessivo
+- Fundo da area principal cinza claro (#f5f7f8)
 
-## Plano: Salvar PDF no Deal e Enviar ao Cliente
+#### 4. Atualizar Logo (`src/components/layout/OmieLogo.tsx`)
+- Adaptar para fundo azul da sidebar (icones brancos)
+- Manter texto "Conector" mas em branco
 
-### Modificar `omie-multi-robot/index.ts`
+#### 5. Atualizar StatsCard (`src/components/ui/stats-card.tsx`)
+- Cards brancos com borda suave
+- Icones em circulos coloridos pequenos
+- Remover efeitos glow/neon
 
-Nos cases `obter_nfe` e `obter_nfse` do `handleVendas`, apos obter o link:
+#### 6. Atualizar ModuleCard (`src/components/ui/module-card.tsx`)
+- Cards brancos com borda suave
+- Hover com sombra sutil (nao glow)
+- Icone colorido a esquerda, layout horizontal
 
-1. **Salvar URL no campo do deal** via `crm.deal.update` com o link do PDF em um campo customizado (`UF_CRM_OMIE_NF_URL`)
-2. **Criar entrada na timeline do deal** via `crm.timeline.comment.add` com o link para download
-3. **Opcionalmente criar atividade de email** via `crm.activity.add` para enviar o PDF ao contato do deal
+#### 7. Atualizar Button styles (`src/components/ui/button.tsx`)
+- Botao primary com azul solido (#428BCA)
+- Remover gradient-primary/shadow-glow de todos os usos
+- Bordas mais arredondadas
 
-### Mudancas no handler `handleVendas`
+#### 8. Remover dados ficticios remanescentes
+- `CRM.tsx` ainda tem arrays hardcoded (contatos, empresas, oportunidades)
+- Substituir por empty states como foi feito nas outras paginas
 
-Adicionar parametro `installation` ao `handleVendas` para poder chamar a API do Bitrix24:
+#### 9. Atualizar todas as paginas
+Remover referencias a classes Omie (`text-gradient-omie`, `gradient-primary`, `shadow-glow`, `bg-module-*`) em:
+- Dashboard.tsx
+- CRM.tsx
+- Financas.tsx
+- Vendas.tsx
+- Estoque.tsx
+- Compras.tsx
+- Contratos.tsx
+- Contador.tsx
+- ConfigOmie.tsx
+- Logs.tsx
+- Simulator.tsx
+- Robots.tsx
 
-```typescript
-case "obter_nfe": {
-  // ... buscar link como hoje ...
-  
-  if (result.cLinkDanfe && installation) {
-    // 1. Salvar URL no deal
-    await callBitrixApi(installation.client_endpoint, installation.access_token,
-      "crm.deal.update", {
-        id: dealData.ID,
-        fields: {
-          UF_CRM_OMIE_NF_URL: result.cLinkDanfe,
-          UF_CRM_OMIE_NF_NUMBER: result.nNF?.toString(),
-        }
-      });
-    
-    // 2. Adicionar comentario na timeline
-    await callBitrixApi(installation.client_endpoint, installation.access_token,
-      "crm.timeline.comment.add", {
-        fields: {
-          ENTITY_ID: dealData.ID,
-          ENTITY_TYPE: "deal",
-          COMMENT: `NF-e #${result.nNF} emitida.\nDANFE: ${result.cLinkDanfe}`,
-        }
-      });
-  }
-}
-```
+#### 10. Limpar `src/App.css`
+- Remover CSS legado do Vite template
 
-### Mesma logica para `obter_nfse`
-
-Salvar `cLinkNFSe` no deal e adicionar timeline comment.
-
-### Assinatura do `handleVendas`
-
-Mudar de:
-```typescript
-async function handleVendas(action, dealData, credentials)
-```
-Para:
-```typescript
-async function handleVendas(action, dealData, credentials, installation)
-```
-
-E passar `installation` na chamada no main handler (linha 594).
-
-## Resultado
-
-- O link do PDF fica salvo no campo `UF_CRM_OMIE_NF_URL` do deal
-- Um comentario aparece na timeline do deal com o link para download
-- O vendedor pode clicar e enviar ao cliente diretamente pelo Bitrix24
+### Arquivos a modificar (13+)
+1. `src/index.css` - Tema completo
+2. `tailwind.config.ts` - Cores dos modulos
+3. `src/components/layout/AppSidebar.tsx` - Sidebar azul
+4. `src/components/layout/DashboardLayout.tsx` - Layout claro
+5. `src/components/layout/OmieLogo.tsx` - Logo para fundo azul
+6. `src/components/ui/stats-card.tsx` - Cards claros
+7. `src/components/ui/module-card.tsx` - Cards claros
+8. `src/components/ui/button.tsx` - Estilos Bitrix
+9. `src/pages/Dashboard.tsx` - Remover classes Omie
+10. `src/pages/CRM.tsx` - Remover dados ficticios + classes
+11. `src/pages/Financas.tsx` - Classes
+12. Todas as outras paginas - Classes Omie
+13. `src/App.css` - Limpar
 
