@@ -55,43 +55,35 @@ export function StatsCard({
   const { icon: iconClass, value: valueClass, bg } = variantClasses[variant];
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/30">
-      {/* Background Glow */}
-      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-all duration-500 group-hover:bg-primary/10" />
-
-      <div className="relative">
-        {/* Header */}
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">{title}</span>
-          <div className={cn("rounded-lg p-2", bg)}>
-            <Icon className={cn("h-4 w-4", iconClass)} />
-          </div>
+    <div className="rounded-xl border border-border bg-card p-5 transition-shadow duration-200 hover:shadow-md">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium text-muted-foreground">{title}</span>
+        <div className={cn("rounded-lg p-2", bg)}>
+          <Icon className={cn("h-4 w-4", iconClass)} />
         </div>
-
-        {/* Value */}
-        <div className="mb-1">
-          <span className={cn("text-3xl font-bold tracking-tight", valueClass)}>
-            {value}
-          </span>
-        </div>
-
-        {/* Description or Trend */}
-        {trend ? (
-          <div className="flex items-center gap-1.5">
-            <span
-              className={cn(
-                "text-xs font-medium",
-                trend.isPositive ? "text-success" : "text-destructive"
-              )}
-            >
-              {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
-            </span>
-            <span className="text-xs text-muted-foreground">{trend.label}</span>
-          </div>
-        ) : description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
       </div>
+
+      <div className="mb-1">
+        <span className={cn("text-3xl font-bold tracking-tight", valueClass)}>
+          {value}
+        </span>
+      </div>
+
+      {trend ? (
+        <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              "text-xs font-medium",
+              trend.isPositive ? "text-success" : "text-destructive"
+            )}
+          >
+            {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
+          </span>
+          <span className="text-xs text-muted-foreground">{trend.label}</span>
+        </div>
+      ) : description ? (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      ) : null}
     </div>
   );
 }

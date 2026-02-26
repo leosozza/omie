@@ -2,123 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Omie ERP Connector Design System - Inspired by Omie's Visual Identity */
+/* Bitrix24-Inspired Design System */
 
 @layer base {
   :root {
-    /* Omie Brand Colors */
-    --background: 200 45% 8%;
-    --foreground: 180 100% 98%;
+    /* Bitrix24 Light Theme */
+    --background: 210 20% 97%;
+    --foreground: 220 30% 15%;
 
-    --card: 200 40% 11%;
-    --card-foreground: 180 100% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 15%;
 
-    --popover: 200 40% 11%;
-    --popover-foreground: 180 100% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 15%;
 
-    /* Omie Cyan Primary */
-    --primary: 180 100% 42%;
-    --primary-foreground: 200 45% 8%;
+    /* Bitrix24 Blue Primary */
+    --primary: 207 80% 52%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 35% 15%;
-    --secondary-foreground: 180 100% 98%;
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 220 30% 25%;
 
-    --muted: 200 30% 18%;
-    --muted-foreground: 200 20% 60%;
+    --muted: 210 15% 95%;
+    --muted-foreground: 215 15% 47%;
 
-    --accent: 72 100% 50%;
-    --accent-foreground: 200 45% 8%;
+    --accent: 210 15% 93%;
+    --accent-foreground: 220 30% 15%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 180 100% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 200 30% 20%;
-    --input: 200 30% 15%;
-    --ring: 180 100% 42%;
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 207 80% 52%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Status colors */
-    --success: 142 76% 36%;
-    --success-foreground: 180 100% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
-    --warning-foreground: 200 45% 8%;
-    --info: 199 89% 48%;
-    --info-foreground: 200 45% 8%;
+    --warning-foreground: 38 100% 15%;
+    --info: 207 80% 52%;
+    --info-foreground: 0 0% 100%;
 
-    /* Module colors - Omie style */
-    --module-crm: 280 80% 60%;
-    --module-vendas: 25 95% 55%;
-    --module-servicos: 180 100% 42%;
-    --module-financas: 142 76% 45%;
-    --module-estoque: 200 80% 55%;
-    --module-compras: 340 80% 55%;
-    --module-producao: 45 95% 50%;
-    --module-contador: 260 70% 55%;
+    /* Module colors - Bitrix24 palette */
+    --module-crm: 262 60% 55%;
+    --module-vendas: 25 85% 55%;
+    --module-servicos: 190 80% 42%;
+    --module-financas: 142 65% 42%;
+    --module-estoque: 207 75% 52%;
+    --module-compras: 340 65% 52%;
+    --module-producao: 45 90% 48%;
+    --module-contador: 262 55% 52%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(180 100% 42%) 0%, hsl(160 100% 35%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(200 40% 11%) 0%, hsl(200 45% 8%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(200 40% 14%) 0%, hsl(200 40% 10%) 100%);
-    --gradient-omie: linear-gradient(135deg, hsl(180 100% 42%) 0%, hsl(72 100% 50%) 100%);
-    --gradient-finance: linear-gradient(135deg, hsl(142 76% 45%) 0%, hsl(160 80% 40%) 100%);
-    --gradient-sales: linear-gradient(135deg, hsl(25 95% 55%) 0%, hsl(45 95% 50%) 100%);
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(200 45% 5% / 0.3);
-    --shadow-md: 0 4px 6px -1px hsl(200 45% 5% / 0.4), 0 2px 4px -2px hsl(200 45% 5% / 0.3);
-    --shadow-lg: 0 10px 15px -3px hsl(200 45% 5% / 0.4), 0 4px 6px -4px hsl(200 45% 5% / 0.3);
-    --shadow-glow: 0 0 25px hsl(180 100% 42% / 0.4);
-    --shadow-glow-accent: 0 0 25px hsl(72 100% 50% / 0.3);
-
-    /* Sidebar - Darker */
-    --sidebar-background: 200 45% 6%;
-    --sidebar-foreground: 180 100% 98%;
-    --sidebar-primary: 180 100% 42%;
-    --sidebar-primary-foreground: 200 45% 8%;
-    --sidebar-accent: 200 35% 15%;
-    --sidebar-accent-foreground: 180 100% 98%;
-    --sidebar-border: 200 30% 15%;
-    --sidebar-ring: 180 100% 42%;
+    /* Sidebar - Bitrix24 Blue Gradient */
+    --sidebar-background: 213 80% 50%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 213 80% 50%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 70% 58%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
-    --background: 200 45% 8%;
-    --foreground: 180 100% 98%;
+    --background: 222 30% 12%;
+    --foreground: 210 20% 95%;
 
-    --card: 200 40% 11%;
-    --card-foreground: 180 100% 98%;
+    --card: 222 25% 16%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 200 40% 11%;
-    --popover-foreground: 180 100% 98%;
+    --popover: 222 25% 16%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 180 100% 42%;
-    --primary-foreground: 200 45% 8%;
+    --primary: 207 80% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 35% 15%;
-    --secondary-foreground: 180 100% 98%;
+    --secondary: 222 20% 22%;
+    --secondary-foreground: 210 20% 90%;
 
-    --muted: 200 30% 18%;
-    --muted-foreground: 200 20% 60%;
+    --muted: 222 20% 20%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 72 100% 50%;
-    --accent-foreground: 200 45% 8%;
+    --accent: 222 20% 22%;
+    --accent-foreground: 210 20% 95%;
 
     --destructive: 0 62% 50%;
-    --destructive-foreground: 180 100% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 200 30% 20%;
-    --input: 200 30% 15%;
-    --ring: 180 100% 42%;
+    --border: 222 15% 25%;
+    --input: 222 15% 22%;
+    --ring: 207 80% 55%;
 
-    --sidebar-background: 200 45% 6%;
-    --sidebar-foreground: 180 100% 98%;
-    --sidebar-primary: 180 100% 42%;
-    --sidebar-primary-foreground: 200 45% 8%;
-    --sidebar-accent: 200 35% 15%;
-    --sidebar-accent-foreground: 180 100% 98%;
-    --sidebar-border: 200 30% 15%;
-    --sidebar-ring: 180 100% 42%;
+    --sidebar-background: 222 30% 10%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 207 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 20% 18%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 222 15% 20%;
+    --sidebar-ring: 207 80% 55%;
   }
 }
 
@@ -134,48 +119,6 @@
 }
 
 @layer utilities {
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-  
-  .gradient-omie {
-    background: var(--gradient-omie);
-  }
-  
-  .gradient-card {
-    background: var(--gradient-card);
-  }
-
-  .gradient-finance {
-    background: var(--gradient-finance);
-  }
-
-  .gradient-sales {
-    background: var(--gradient-sales);
-  }
-  
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
-
-  .shadow-glow-accent {
-    box-shadow: var(--shadow-glow-accent);
-  }
-  
-  .text-gradient {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-omie {
-    background: var(--gradient-omie);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
   /* Module card backgrounds */
   .bg-module-crm {
     background: hsl(var(--module-crm));
@@ -207,32 +150,5 @@
 
   .bg-module-contador {
     background: hsl(var(--module-contador));
-  }
-
-  /* Animation utilities */
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 15px hsl(180 100% 42% / 0.3);
-    }
-    50% {
-      box-shadow: 0 0 30px hsl(180 100% 42% / 0.6);
-    }
-  }
-
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
   }
 }

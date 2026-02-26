@@ -236,7 +236,7 @@ export default function Simulator() {
             <Button
               onClick={runTest}
               disabled={!selectedScenario || isRunning}
-              className="w-full gradient-primary shadow-glow"
+              className="w-full"
             >
               {isRunning ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -264,20 +264,20 @@ export default function Simulator() {
                 <Alert
                   className={
                     result.success
-                      ? "border-green-500/50 bg-green-500/10"
-                      : "border-red-500/50 bg-red-500/10"
+                      ? "border-success/50 bg-success/10"
+                      : "border-destructive/50 bg-destructive/10"
                   }
                 >
                   {result.success ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <CheckCircle2 className="h-4 w-4 text-success" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-red-500" />
+                    <XCircle className="h-4 w-4 text-destructive" />
                   )}
-                  <AlertTitle className={result.success ? "text-green-500" : "text-red-500"}>
+                  <AlertTitle className={result.success ? "text-success" : "text-destructive"}>
                     {result.success ? "Teste Passou" : "Teste Falhou"}
                   </AlertTitle>
                   {result.error && (
-                    <AlertDescription className="text-red-400">
+                    <AlertDescription className="text-destructive">
                       {result.error}
                     </AlertDescription>
                   )}

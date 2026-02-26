@@ -22,16 +22,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  // For demo purposes, allow access without member_id
-  // In production, you would require it
   const showDemoMode = !memberId;
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <main className="flex-1 overflow-auto bg-background">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border bg-card px-6">
             <SidebarTrigger className="-ml-2" />
             <div className="flex-1" />
             {showDemoMode && (
@@ -45,7 +43,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Alert className="mb-6 border-warning/50 bg-warning/10">
                 <AlertCircle className="h-4 w-4 text-warning" />
                 <AlertTitle className="text-warning">Modo Demonstração</AlertTitle>
-                <AlertDescription className="text-warning/80">
+                <AlertDescription className="text-muted-foreground">
                   Você está visualizando o conector em modo demo. Para conectar ao Bitrix24, 
                   instale o app através do Marketplace.
                 </AlertDescription>
