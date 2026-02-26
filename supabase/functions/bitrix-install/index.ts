@@ -437,7 +437,14 @@ serve(async (req) => {
   <body>
     <script>
       BX24.init(function() {
-        window.location.href = '${iframeUrl}';
+        // Always call installFinish to ensure app is marked as installed
+        BX24.callMethod('app.info', {}, function(result) {
+          var installed = result && result.data && result.data().INSTALLED;
+          if (!installed) {
+            BX24.installFinish();
+          }
+          window.location.href = '${iframeUrl}';
+        });
       });
     </script>
   </body>
