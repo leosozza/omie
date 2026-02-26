@@ -1,3 +1,4 @@
+// bitrix-iframe v2 - with client_endpoint fix
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -245,7 +246,8 @@ async function registerRobots(supabase: any, installation: any) {
 
   try {
     const handlerUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/omie-multi-robot`;
-
+    let successCount = 0;
+    console.log(`registerRobots: using client_endpoint=${installation.client_endpoint}`);
     for (const robot of multiRobots) {
       const actionOptions: Record<string, string> = {};
       for (const action of robot.actions) {
@@ -304,12 +306,14 @@ async function registerRobots(supabase: any, installation: any) {
         { onConflict: "tenant_id,robot_code" }
       );
 
-      console.log(`Robot ${robot.code} registered:`, !result.error);
+      console.log(`Robot ${robot.code} registered:`, !result.error, result.error ? result.error_description : "");
+      if (!result.error) successCount++;
     }
 
+    const allSuccess = successCount === multiRobots.length;
     await supabase
       .from("bitrix_installations")
-      .update({ robots_registered: true })
+      .update({ robots_registered: allSuccess })
       .eq("member_id", installation.member_id);
 
     console.log("Multi-function robots registered for:", installation.member_id);
