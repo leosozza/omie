@@ -124,9 +124,23 @@ serve(async (req) => {
         }).catch(console.error);
       }
 
-      // Lazy robot registration
+      // Lazy robot registration - also check if robots actually registered successfully
       if (!installation.robots_registered) {
         registerRobots(supabase, installation).catch(console.error);
+      } else {
+        // Verify robots are actually registered (not just flagged)
+        const { data: failedRobots } = await supabase
+          .from("robots_registry")
+          .select("id")
+          .eq("tenant_id", memberId)
+          .eq("is_registered", false)
+          .limit(1);
+        
+        if (failedRobots && failedRobots.length > 0) {
+          console.log("bitrix-iframe: found unregistered robots, retrying registration");
+          installation.robots_registered = false;
+          registerRobots(supabase, installation).catch(console.error);
+        }
       }
     }
 
