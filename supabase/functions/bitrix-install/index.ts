@@ -349,11 +349,14 @@ serve(async (req) => {
       }
     }
     
-    // Override auth.domain with resolved value
+    // Override auth.domain and client_endpoint with resolved value
     if (resolvedDomain && resolvedDomain !== "oauth.bitrix.info") {
       auth.domain = resolvedDomain;
+      // Fix client_endpoint to use the real portal domain
+      auth.client_endpoint = `https://${resolvedDomain}/rest/`;
+      auth.server_endpoint = `https://${resolvedDomain}/rest/`;
     }
-    console.log(`bitrix-install: final domain=${auth.domain}`);
+    console.log(`bitrix-install: final domain=${auth.domain} client_endpoint=${auth.client_endpoint}`);
 
     // Check if this is a reinstall (member_id already exists)
     const { data: existingInstall } = await supabase
