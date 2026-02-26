@@ -147,16 +147,16 @@ export default function ConfigOmie() {
 
       {/* Current Status */}
       {existingConfig && (
-        <Alert className={existingConfig.is_active ? "border-green-500/50 bg-green-500/10" : "border-red-500/50 bg-red-500/10"}>
+        <Alert className={existingConfig.is_active ? "border-success/50 bg-success/10" : "border-destructive/50 bg-destructive/10"}>
           {existingConfig.is_active ? (
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-success" />
           ) : (
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-destructive" />
           )}
-          <AlertTitle className={existingConfig.is_active ? "text-green-500" : "text-red-500"}>
+          <AlertTitle className={existingConfig.is_active ? "text-success" : "text-destructive"}>
             {existingConfig.is_active ? "Conectado" : "Desconectado"}
           </AlertTitle>
-          <AlertDescription className={existingConfig.is_active ? "text-green-400" : "text-red-400"}>
+          <AlertDescription className="text-muted-foreground">
             {existingConfig.is_active 
               ? `Última sincronização: ${existingConfig.last_sync ? new Date(existingConfig.last_sync).toLocaleString("pt-BR") : "Nunca"}`
               : existingConfig.last_error || "Configure suas credenciais abaixo"
@@ -218,7 +218,7 @@ export default function ConfigOmie() {
               <Button
                 onClick={() => saveMutation.mutate()}
                 disabled={!validationResult?.valid || saveMutation.isPending}
-                className="gradient-primary"
+                className=""
               >
                 {saveMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -229,16 +229,16 @@ export default function ConfigOmie() {
 
             {/* Validation Result */}
             {validationResult && (
-              <Alert className={validationResult.valid ? "border-green-500/50 bg-green-500/10" : "border-red-500/50 bg-red-500/10"}>
+              <Alert className={validationResult.valid ? "border-success/50 bg-success/10" : "border-destructive/50 bg-destructive/10"}>
                 {validationResult.valid ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                 ) : (
-                  <XCircle className="h-4 w-4 text-red-500" />
+                  <XCircle className="h-4 w-4 text-destructive" />
                 )}
-                <AlertTitle className={validationResult.valid ? "text-green-500" : "text-red-500"}>
+                <AlertTitle className={validationResult.valid ? "text-success" : "text-destructive"}>
                   {validationResult.valid ? "Credenciais Válidas" : "Credenciais Inválidas"}
                 </AlertTitle>
-                <AlertDescription className={validationResult.valid ? "text-green-400" : "text-red-400"}>
+                <AlertDescription className="text-muted-foreground">
                   {validationResult.valid && validationResult.empresa ? (
                     <>
                       Empresa: {validationResult.empresa.nome_fantasia}

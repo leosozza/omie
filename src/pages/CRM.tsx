@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Users,
   Building2,
@@ -14,7 +13,6 @@ import {
   Plus,
   ArrowLeftRight,
   CheckCircle2,
-  Clock,
   DollarSign,
 } from "lucide-react";
 import { StatsCard } from "@/components/ui/stats-card";
@@ -23,15 +21,15 @@ export default function CRM() {
   const [searchTerm, setSearchTerm] = useState("");
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-module-crm/20">
-              <Users className="h-8 w-8 text-module-crm" />
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Users className="h-8 w-8 text-primary" />
             </div>
-            <span className="text-gradient-omie">CRM</span>
+            CRM
           </h1>
           <p className="mt-1 text-muted-foreground">
             Sincronização bidirecional entre Bitrix24 e Omie CRM
@@ -42,7 +40,7 @@ export default function CRM() {
             <ArrowLeftRight className="h-4 w-4" />
             Sincronizar Agora
           </Button>
-          <Button className="gap-2 gradient-primary shadow-glow">
+          <Button className="gap-2">
             <Plus className="h-4 w-4" />
             Novo Contato
           </Button>
@@ -51,35 +49,10 @@ export default function CRM() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Contatos Sincronizados"
-          value="1.234"
-          icon={Users}
-          variant="info"
-          description="Total no sistema"
-        />
-        <StatsCard
-          title="Empresas"
-          value="456"
-          icon={Building2}
-          variant="default"
-          description="Contas ativas"
-        />
-        <StatsCard
-          title="Oportunidades"
-          value="89"
-          icon={Target}
-          variant="success"
-          description="Em andamento"
-          trend={{ value: 15, label: "vs mês anterior", isPositive: true }}
-        />
-        <StatsCard
-          title="Pipeline"
-          value="R$ 2.5M"
-          icon={DollarSign}
-          variant="warning"
-          description="Valor total"
-        />
+        <StatsCard title="Contatos Sincronizados" value="0" icon={Users} variant="info" description="Total no sistema" />
+        <StatsCard title="Empresas" value="0" icon={Building2} variant="default" description="Contas ativas" />
+        <StatsCard title="Oportunidades" value="0" icon={Target} variant="success" description="Em andamento" />
+        <StatsCard title="Pipeline" value="R$ 0" icon={DollarSign} variant="warning" description="Valor total" />
       </div>
 
       {/* Sync Status */}
@@ -90,14 +63,11 @@ export default function CRM() {
               <ArrowLeftRight className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium">Sincronização Bidirecional Ativa</p>
-              <p className="text-sm text-muted-foreground">Última sincronização: há 5 minutos</p>
+              <p className="font-medium">Sincronização Bidirecional</p>
+              <p className="text-sm text-muted-foreground">Configure a integração para ativar</p>
             </div>
           </div>
-          <Badge variant="secondary" className="gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Sincronizado
-          </Badge>
+          <Badge variant="secondary">Aguardando</Badge>
         </CardContent>
       </Card>
 
@@ -119,7 +89,7 @@ export default function CRM() {
         </TabsList>
 
         <TabsContent value="contatos" className="space-y-4">
-          <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -138,128 +108,48 @@ export default function CRM() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { nome: "João Silva", email: "joao@empresa.com", empresa: "Empresa ABC", status: "sync" },
-                  { nome: "Maria Santos", email: "maria@tech.com", empresa: "Tech Solutions", status: "sync" },
-                  { nome: "Pedro Costa", email: "pedro@dist.com", empresa: "Distribuidora 123", status: "pending" },
-                  { nome: "Ana Oliveira", email: "ana@startup.io", empresa: "Startup XYZ", status: "sync" },
-                ].map((contato, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar>
-                        <AvatarFallback className="bg-module-crm/20 text-module-crm">
-                          {contato.nome.split(" ").map(n => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{contato.nome}</p>
-                          {contato.status === "sync" ? (
-                            <CheckCircle2 className="h-4 w-4 text-module-financas" />
-                          ) : (
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{contato.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge variant="outline">{contato.empresa}</Badge>
-                      <Button size="sm" variant="ghost">
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhum contato sincronizado</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para sincronizar contatos
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="empresas" className="space-y-4">
-          <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <Card>
             <CardHeader>
               <CardTitle>Empresas</CardTitle>
               <CardDescription>Contas sincronizadas Bitrix24 ↔ Omie</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { nome: "Empresa ABC Ltda", cnpj: "12.345.678/0001-90", cidade: "São Paulo", status: "sync" },
-                  { nome: "Tech Solutions S.A.", cnpj: "98.765.432/0001-10", cidade: "Rio de Janeiro", status: "sync" },
-                  { nome: "Distribuidora 123", cnpj: "11.222.333/0001-44", cidade: "Belo Horizonte", status: "sync" },
-                ].map((empresa, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-module-crm/20">
-                        <Building2 className="h-5 w-5 text-module-crm" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{empresa.nome}</p>
-                          <CheckCircle2 className="h-4 w-4 text-module-financas" />
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {empresa.cnpj} • {empresa.cidade}
-                        </p>
-                      </div>
-                    </div>
-                    <Button size="sm" variant="ghost">
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhuma empresa sincronizada</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para sincronizar empresas
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="oportunidades" className="space-y-4">
-          <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <Card>
             <CardHeader>
               <CardTitle>Oportunidades</CardTitle>
               <CardDescription>Pipeline de vendas sincronizado</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { nome: "Projeto Enterprise", empresa: "Tech Solutions", valor: 150000, fase: "Proposta", prob: 60 },
-                  { nome: "Licenciamento Anual", empresa: "Empresa ABC", valor: 45000, fase: "Negociação", prob: 80 },
-                  { nome: "Consultoria TI", empresa: "Distribuidora 123", valor: 28000, fase: "Qualificação", prob: 30 },
-                ].map((opp, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-module-vendas/20">
-                        <Target className="h-5 w-5 text-module-vendas" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{opp.nome}</p>
-                        <p className="text-sm text-muted-foreground">{opp.empresa}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {opp.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{opp.fase}</Badge>
-                          <span className="text-sm text-muted-foreground">{opp.prob}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Target className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-medium text-muted-foreground">Nenhuma oportunidade sincronizada</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Configure a integração com o Omie para sincronizar oportunidades
+                </p>
               </div>
             </CardContent>
           </Card>

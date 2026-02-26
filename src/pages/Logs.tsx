@@ -64,11 +64,11 @@ interface LogEntry {
 }
 
 const statusConfig = {
-  success: { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10", label: "Sucesso" },
-  error: { icon: XCircle, color: "text-red-500", bg: "bg-red-500/10", label: "Erro" },
-  pending: { icon: Clock, color: "text-yellow-500", bg: "bg-yellow-500/10", label: "Pendente" },
-  received: { icon: AlertTriangle, color: "text-blue-500", bg: "bg-blue-500/10", label: "Recebido" },
-  skipped: { icon: AlertTriangle, color: "text-gray-500", bg: "bg-gray-500/10", label: "Ignorado" },
+  success: { icon: CheckCircle2, color: "text-success", bg: "bg-success/10", label: "Sucesso" },
+  error: { icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", label: "Erro" },
+  pending: { icon: Clock, color: "text-warning", bg: "bg-warning/10", label: "Pendente" },
+  received: { icon: AlertTriangle, color: "text-info", bg: "bg-info/10", label: "Recebido" },
+  skipped: { icon: AlertTriangle, color: "text-muted-foreground", bg: "bg-muted", label: "Ignorado" },
 };
 
 export default function Logs() {

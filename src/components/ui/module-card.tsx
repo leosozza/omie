@@ -25,39 +25,15 @@ interface ModuleCardProps {
   };
 }
 
-const colorClasses: Record<ModuleColor, { bg: string; shadow: string }> = {
-  crm: { 
-    bg: "bg-module-crm", 
-    shadow: "hover:shadow-[0_0_30px_hsl(280_80%_60%/0.4)]" 
-  },
-  vendas: { 
-    bg: "bg-module-vendas", 
-    shadow: "hover:shadow-[0_0_30px_hsl(25_95%_55%/0.4)]" 
-  },
-  servicos: { 
-    bg: "bg-module-servicos", 
-    shadow: "hover:shadow-[0_0_30px_hsl(180_100%_42%/0.4)]" 
-  },
-  financas: { 
-    bg: "bg-module-financas", 
-    shadow: "hover:shadow-[0_0_30px_hsl(142_76%_45%/0.4)]" 
-  },
-  estoque: { 
-    bg: "bg-module-estoque", 
-    shadow: "hover:shadow-[0_0_30px_hsl(200_80%_55%/0.4)]" 
-  },
-  compras: { 
-    bg: "bg-module-compras", 
-    shadow: "hover:shadow-[0_0_30px_hsl(340_80%_55%/0.4)]" 
-  },
-  producao: { 
-    bg: "bg-module-producao", 
-    shadow: "hover:shadow-[0_0_30px_hsl(45_95%_50%/0.4)]" 
-  },
-  contador: { 
-    bg: "bg-module-contador", 
-    shadow: "hover:shadow-[0_0_30px_hsl(260_70%_55%/0.4)]" 
-  },
+const colorClasses: Record<ModuleColor, string> = {
+  crm: "bg-module-crm",
+  vendas: "bg-module-vendas",
+  servicos: "bg-module-servicos",
+  financas: "bg-module-financas",
+  estoque: "bg-module-estoque",
+  compras: "bg-module-compras",
+  producao: "bg-module-producao",
+  contador: "bg-module-contador",
 };
 
 export function ModuleCard({ 
@@ -69,54 +45,47 @@ export function ModuleCard({
   badge,
   stats 
 }: ModuleCardProps) {
-  const { bg, shadow } = colorClasses[color];
+  const bg = colorClasses[color];
 
   return (
     <Link
       to={href}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border/50",
-        "bg-card p-5 transition-all duration-300",
-        "hover:border-primary/30 hover:translate-y-[-2px]",
-        shadow
+        "group flex flex-col overflow-hidden rounded-xl border border-border",
+        "bg-card p-5 transition-all duration-200",
+        "hover:shadow-md hover:border-primary/30"
       )}
     >
-      {/* Icon Container */}
-      <div
-        className={cn(
-          "mb-4 flex h-12 w-12 items-center justify-center rounded-lg",
-          bg,
-          "transition-transform duration-300 group-hover:scale-110"
+      <div className="flex items-start justify-between mb-3">
+        <div
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-lg",
+            bg,
+            "transition-transform duration-200 group-hover:scale-105"
+          )}
+        >
+          <Icon className="h-5 w-5 text-white" />
+        </div>
+        {badge && (
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {badge}
+          </span>
         )}
-      >
-        <Icon className="h-6 w-6 text-primary-foreground" />
       </div>
 
-      {/* Badge */}
-      {badge && (
-        <span className="absolute right-3 top-3 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
-          {badge}
-        </span>
-      )}
-
-      {/* Content */}
-      <h3 className="mb-1 text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+      <h3 className="mb-1 text-base font-semibold text-foreground group-hover:text-primary transition-colors">
         {title}
       </h3>
       <p className="text-sm text-muted-foreground line-clamp-2">
         {description}
       </p>
 
-      {/* Stats */}
       {stats && (
-        <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
           <span className="text-xs text-muted-foreground">{stats.label}</span>
           <span className="text-sm font-semibold text-primary">{stats.value}</span>
         </div>
       )}
-
-      {/* Hover Indicator */}
-      <div className="absolute bottom-0 left-0 h-1 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
     </Link>
   );
 }

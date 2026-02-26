@@ -112,11 +112,11 @@ export default function Dashboard() {
   const isOmieConnected = omieConfig?.is_active === true;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gradient-omie">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Dashboard
           </h1>
           <p className="mt-1 text-muted-foreground">
@@ -127,7 +127,7 @@ export default function Dashboard() {
           <Button variant="outline" asChild>
             <Link to="/logs">Ver Logs</Link>
           </Button>
-          <Button asChild className="gradient-primary shadow-glow hover:shadow-glow-accent transition-all">
+          <Button asChild>
             <Link to="/config">Configurar</Link>
           </Button>
         </div>
@@ -236,8 +236,7 @@ export default function Dashboard() {
 
       {/* Connection Status & Recent Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Connections */}
-        <Card className="border-border/50 bg-card/50 backdrop-blur">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -261,8 +260,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Logs */}
-        <Card className="border-border/50 bg-card/50 backdrop-blur">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Atividade Recente</CardTitle>

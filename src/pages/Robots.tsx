@@ -136,8 +136,8 @@ export default function Robots() {
               >
                 <Card
                   className={cn(
-                    "transition-all hover:shadow-lg",
-                    isRegistered && "border-green-500/30"
+                    "transition-all hover:shadow-md",
+                    isRegistered && "border-success/30"
                   )}
                 >
                   <CardHeader className="pb-3">
@@ -150,12 +150,12 @@ export default function Robots() {
                           {robot.actions.length} ações
                         </Badge>
                         {isRegistered ? (
-                          <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-500">
+                          <Badge variant="outline" className="border-success/50 bg-success/10 text-success">
                             <CheckCircle2 className="mr-1 h-3 w-3" />
                             Ativo
                           </Badge>
                         ) : status ? (
-                          <Badge variant="outline" className="border-red-500/50 bg-red-500/10 text-red-500">
+                          <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive">
                             <XCircle className="mr-1 h-3 w-3" />
                             Erro
                           </Badge>
@@ -209,7 +209,7 @@ export default function Robots() {
                         </div>
                       )}
                       {status?.last_error && (
-                        <div className="mt-2 rounded bg-red-500/10 p-2 text-xs text-red-400">
+                        <div className="mt-2 rounded bg-destructive/10 p-2 text-xs text-destructive">
                           {status.last_error}
                         </div>
                       )}
