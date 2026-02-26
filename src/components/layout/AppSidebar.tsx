@@ -58,6 +58,7 @@ const moduleNavItems: NavItem[] = [
 
 const advancedNavItems: NavItem[] = [
   { title: "Robots", url: "/robots", icon: Bot },
+  { title: "Placements", url: "/placements", icon: LayoutDashboard, badge: "Novo" },
   { title: "Simulador", url: "/simulator", icon: TestTube },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];

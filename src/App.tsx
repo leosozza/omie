@@ -17,6 +17,7 @@ import CRM from "@/pages/CRM";
 import Compras from "@/pages/Compras";
 import Contratos from "@/pages/Contratos";
 import Contador from "@/pages/Contador";
+import Placements from "@/pages/Placements";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -129,6 +130,14 @@ const App = () => (
             element={
               <DashboardLayout>
                 <Contador />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/placements"
+            element={
+              <DashboardLayout>
+                <Placements />
               </DashboardLayout>
             }
           />

@@ -142,8 +142,12 @@ serve(async (req) => {
           registerRobots(supabase, installation).catch(console.error);
         }
       }
-    }
 
+      // Lazy placement registration
+      if (!installation.placements_registered) {
+        registerPlacements(supabase, installation).catch(console.error);
+      }
+    }
     // Build redirect URL based on action
     let targetPath = "/crm";
     switch (action) {
@@ -333,5 +337,49 @@ async function registerRobots(supabase: any, installation: any) {
     console.log("Multi-function robots registered for:", installation.member_id);
   } catch (error) {
     console.error("Error registering robots:", error);
+  }
+}
+
+// Register placements in Bitrix24 CRM entities
+async function registerPlacements(supabase: any, installation: any) {
+  const placementUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/omie-placement`;
+  
+  const placements = [
+    { placement: "CRM_DEAL_DETAIL_TAB", title: "Omie ERP" },
+    { placement: "CRM_LEAD_DETAIL_TAB", title: "Omie ERP" },
+    { placement: "CRM_CONTACT_DETAIL_TAB", title: "Omie ERP" },
+    { placement: "CRM_COMPANY_DETAIL_TAB", title: "Omie ERP" },
+  ];
+
+  try {
+    let successCount = 0;
+    const clientEndpoint = installation.client_endpoint || `https://${installation.domain}/rest/`;
+
+    for (const p of placements) {
+      const response = await fetch(`${clientEndpoint}placement.bind`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          auth: installation.access_token,
+          PLACEMENT: p.placement,
+          HANDLER: placementUrl,
+          TITLE: p.title,
+        }),
+      });
+
+      const result = await response.json();
+      console.log(`Placement ${p.placement}:`, result.error ? result.error_description : "OK");
+      if (!result.error) successCount++;
+    }
+
+    const allSuccess = successCount === placements.length;
+    await supabase
+      .from("bitrix_installations")
+      .update({ placements_registered: allSuccess })
+      .eq("member_id", installation.member_id);
+
+    console.log(`Placements registered for ${installation.member_id}: ${successCount}/${placements.length}`);
+  } catch (error) {
+    console.error("Error registering placements:", error);
   }
 }
