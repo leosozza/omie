@@ -1,61 +1,79 @@
 
 
-## Diagnostico: Instalacao nao finaliza no Bitrix24
+## Placements Omie no Bitrix24
 
-### Causa Raiz Identificada
+Criar uma aba "Omie ERP" dentro das fichas de Deal, Lead, Contato e Empresa no Bitrix24, exibindo um painel completo com dados do Omie (financeiro, pedidos/NFs, historico do cliente, estoque).
 
-Analisei os logs das edge functions e encontrei **3 problemas**:
+### Arquitetura
 
-**1. `BX24.installFinish()` nunca e chamado (CRITICO)**
-O Bitrix24 exige que o handler de instalacao chame `BX24.installFinish()` via JS SDK para sinalizar que a instalacao foi concluida. Sem isso, o Bitrix24 fica preso mostrando "instalando..." e nunca finaliza. O codigo atual apenas mostra HTML e redireciona, mas nunca chama esse metodo.
-
-**2. Campo `domain` salvo vazio**
-Os logs mostram `domain=` vazio porque os FLAT params do Bitrix24 (`AUTH_ID, REFRESH_ID, member_id, SERVER_ENDPOINT`) nao incluem `DOMAIN`. O `SERVER_ENDPOINT` contem a URL (ex: `https://xxx.bitrix24.com/rest/`), mas o codigo nao extrai o domain dele.
-
-**3. Reinstall retorna 302 bruto dentro do iframe**
-Para reinstalls, o codigo retorna um HTTP 302 redirect direto. Dentro do iframe do Bitrix24, isso pode ser bloqueado pelo browser. Deveria retornar HTML com `BX24.init()` + redirect via JS.
-
-### Evidencia nos Logs
-
-```
-bitrix-install: form keys received (8): AUTH_ID, AUTH_EXPIRES, REFRESH_ID, SERVER_ENDPOINT, member_id, status, PLACEMENT, PLACEMENT_OPTIONS
-bitrix-install: checking FLAT params - AUTH_ID=true member_id=true domain=
+```text
+Bitrix24 Detail Page
+  └── Tab "Omie ERP" (placement)
+        └── iframe → Edge Function (omie-placement)
+              └── HTML/CSS renderizado server-side
+                    ├── Resumo Financeiro (boletos, PIX, status pgto)
+                    ├── Pedidos & NF-e/NFS-e (lista + links PDF)
+                    ├── Histórico do Cliente (compras, crédito)
+                    └── Estoque dos Produtos (disponível, reserva)
 ```
 
-Domain vazio + no `BX24.installFinish()` = instalacao nunca finaliza.
+### Implementacao
 
-### Plano de Correcao
+#### 1. Registrar placements no `bitrix-install` e `bitrix-iframe`
 
-#### Modificar `supabase/functions/bitrix-install/index.ts`
+Adicionar chamadas a `placement.bind` na funcao `registerRobots` (ou funcao separada `registerPlacements`) para registrar 4 placements:
 
-1. **Extrair domain do SERVER_ENDPOINT** quando DOMAIN nao esta presente nos FLAT params:
-   ```typescript
-   // Se domain vazio, extrair de SERVER_ENDPOINT
-   // "https://xxx.bitrix24.com/rest/" → "xxx.bitrix24.com"
-   if (!domain && serverEndpoint) {
-     try { domain = new URL(serverEndpoint).hostname; } catch {}
-   }
-   ```
+- `CRM_DEAL_DETAIL_TAB` → "Omie ERP"
+- `CRM_LEAD_DETAIL_TAB` → "Omie ERP"  
+- `CRM_CONTACT_DETAIL_TAB` → "Omie ERP"
+- `CRM_COMPANY_DETAIL_TAB` → "Omie ERP"
 
-2. **Chamar `BX24.installFinish()`** no HTML de sucesso (primeira instalacao):
-   ```javascript
-   BX24.init(function() {
-     BX24.installFinish();
-     setTimeout(function() {
-       window.location.href = '...iframe URL...';
-     }, 500);
-   });
-   ```
+Handler URL: `{SUPABASE_URL}/functions/v1/omie-placement`
 
-3. **Substituir 302 por HTML com BX24** para reinstalls tambem (em vez de redirect bruto, retornar HTML que chama `BX24.init()` e faz redirect via JS):
-   ```javascript
-   BX24.init(function() {
-     window.location.href = '...iframe URL...';
-   });
-   ```
+Guardar status no DB (nova coluna `placements_registered` em `bitrix_installations` ou reutilizar `robots_registry`).
 
-4. **Setar `client_endpoint` corretamente** quando vazio, usando domain extraido
+#### 2. Criar Edge Function `omie-placement`
 
-### Arquivos a modificar
-- `supabase/functions/bitrix-install/index.ts` — unica mudanca necessaria
+Nova funcao `supabase/functions/omie-placement/index.ts` que:
+
+- Recebe POST do Bitrix24 com `PLACEMENT`, `PLACEMENT_OPTIONS`, auth data (`member_id`, `access_token`)
+- Identifica o tipo de entidade (deal/lead/contact/company) e o ID da entidade
+- Busca dados do Omie via credenciais do tenant:
+  - **Financeiro**: `financas/contareceber` → boletos/PIX pendentes, status
+  - **Pedidos**: `produtos/pedido/ListarPedidos` → pedidos vinculados ao cliente
+  - **NF-e/NFS-e**: dados de notas fiscais
+  - **Cliente**: `geral/clientes/ConsultarCliente` → historico, credito
+  - **Estoque**: `estoque/consulta` → posicao de estoque
+- Para Deal/Lead: busca o cliente vinculado via `crm.deal.get` / `crm.lead.get` do Bitrix
+- Renderiza HTML responsivo com CSS inline (roda dentro do iframe do Bitrix)
+
+#### 3. Migração de banco
+
+Adicionar coluna `placements_registered boolean DEFAULT false` na tabela `bitrix_installations` para controlar se os placements ja foram registrados.
+
+#### 4. Frontend - Pagina de Placements
+
+Criar pagina `src/pages/Placements.tsx` no dashboard para mostrar status dos placements registrados (similar a pagina Robots). Adicionar rota `/placements` e item no sidebar.
+
+#### 5. Layout do HTML do Placement
+
+O HTML renderizado server-side tera 4 secoes em tabs ou accordion:
+
+- **Financeiro**: cards com boletos pendentes, QR PIX, status de pagamento
+- **Pedidos/NFs**: tabela com pedidos, status, links para PDF de NF-e/NFS-e
+- **Cliente**: info do cliente no Omie, limite de credito, ultimas compras
+- **Estoque**: tabela com produtos, qtd disponivel, reservada, preco
+
+Estilo visual consistente com o branding Omie (cores, fontes), CSS inline para funcionar no iframe.
+
+### Arquivos a criar/modificar
+
+| Arquivo | Acao |
+|---|---|
+| `supabase/functions/omie-placement/index.ts` | Criar - edge function principal |
+| `supabase/functions/bitrix-iframe/index.ts` | Modificar - adicionar `registerPlacements()` |
+| `src/pages/Placements.tsx` | Criar - pagina de status |
+| `src/components/layout/AppSidebar.tsx` | Modificar - adicionar link |
+| `src/App.tsx` | Modificar - adicionar rota |
+| Migration SQL | Adicionar `placements_registered` column |
 
