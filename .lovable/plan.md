@@ -1,60 +1,87 @@
 
 
-## Fluxo de Requisicao de Compras Avancado (Centro de Custo, Rateio, Conta Corrente, DANFE)
+## Analise do Estado Atual vs Escopo Solicitado
 
-Expandir a integracao atual para suportar o fluxo completo de requisicao de compras com parametros avancados do Omie.
+Apos revisar todo o codigo existente, o sistema ja possui uma base solida. Abaixo esta o mapa de cobertura e o plano para fechar as lacunas.
 
-### O que sera feito
+### O que JA esta implementado
 
-**1. Nova tabela `purchase_config` (migracao)**
-Armazena configuracoes por tenant: conta corrente padrao, categoria padrao, e regras de rateio por centro de custo.
+| Modulo | Status | Detalhes |
+|---|---|---|
+| Multi-tenancy | Completo | Via `bitrix_installations.member_id` + RLS em todas as tabelas |
+| Auth/Credentials | Completo | `omie_configurations` + `bitrix_installations` (OAuth tokens) |
+| Field Mapping | Completo | `field_mappings` + auto-discovery + auto-provisioning |
+| Sync Queue | Parcial | Tabela `sync_queue` existe, webhook enfileira, mas **nao ha worker** processando |
+| Logs/Auditoria | Completo | `integration_logs` com UI de consulta |
+| Vendas (Pedidos/OS/NF) | Completo | Edge function + robot |
+| Financeiro (Boleto/PIX/CR) | Completo | Edge function + robot |
+| Estoque | Completo | Edge function + robot |
+| CRM/Clientes | Parcial | Sync basico, falta validacao CPF/CNPJ e dedup |
+| Compras (CP/Rateio/DANFE) | Completo | Edge function + robot + config UI |
+| Contratos | Completo | Edge function + robot |
+| Contador (XMLs) | Completo | Edge function |
+| Placements (iFrame Bitrix) | Completo | 4 abas no CRM |
+| Robots | Completo | 6 multi-robots registrados |
+
+### Lacunas Criticas a Implementar
 
 ```text
-purchase_config
-├── id (uuid PK)
-├── tenant_id (text)
-├── config_type (text: "conta_corrente" | "categoria" | "centro_custo" | "rateio")
-├── omie_code (text) — codigo do Omie (CC, categoria, departamento)
-├── omie_name (text) — nome legivel
-├── bitrix_field (text, nullable) — campo do Bitrix mapeado
-├── percentual (numeric, nullable) — % do rateio
-├── is_default (boolean) — se e o padrao
-├── is_active (boolean)
-├── created_at, updated_at
+FASE 1: Queue Worker + Retry (infraestrutura)
+├── Edge function "sync-queue-worker" que processa sync_queue
+├── pg_cron para disparar a cada 1 minuto
+├── Retry com backoff exponencial
+└── Botao "Reprocessar" na UI de Logs
+
+FASE 2: Produtos e Catalogo (novo modulo)
+├── Edge function "omie-produtos"
+│   ├── ListarProdutos / ConsultarProduto
+│   ├── ListarTabelaPrecos
+│   └── Sync para Bitrix (crm.product.add/update)
+├── Pagina frontend "Produtos"
+└── Webhook Omie "Produto.Incluido/Alterado" → sync_queue
+
+FASE 3: Status/Pipeline Mapping (mapeamento visual)
+├── Nova tabela "pipeline_mappings"
+│   ├── bitrix_pipeline_id / stage_id
+│   ├── omie_etapa / omie_entity_type
+│   └── trigger_action (ex: "criar_pedido" ao entrar na fase X)
+├── UI de mapeamento visual (Pipeline → Etapas Omie)
+└── Webhook Bitrix "onCrmDealUpdate" → avaliar regra → disparar acao
+
+FASE 4: CRM Avancado (CPF/CNPJ + Dedup)
+├── Validacao de CPF/CNPJ no sync de clientes
+├── Busca por CNPJ antes de criar (anti-duplicidade)
+├── Consulta CEP via API (ViaCEP)
+└── Tags cruzadas Bitrix↔Omie para rastreio
 ```
 
-RLS: somente leitura para tenant autenticado (edge functions usam service_role para escrita).
+### Recomendacao de Sequencia
 
-**2. Expandir edge function `omie-compras`**
-Adicionar actions:
-- `listar_centros_custo` → `geral/departamentos` / `ListarDepartamentos`
-- `listar_categorias` → `geral/categorias` / `ListarCategorias`
-- `listar_contas_correntes` → `geral/contacorrente` / `ListarContasCorrentes`
-- `incluir_conta_pagar_avancado` → `financas/contapagar` / `IncluirContaPagar` com suporte a `distribuicao` (rateio), `id_conta_corrente`, `codigo_categoria`
-- `importar_nfe_danfe` → `produtos/nfentrada` / `ImportarNFeEntrada` via chave de acesso DANFE
+Sugiro comecar pela **Fase 1 (Queue Worker)** pois e a base que faz toda a arquitetura de webhooks funcionar de verdade. Hoje os webhooks do Omie sao recebidos e enfileirados em `sync_queue`, mas ninguem processa essa fila — os itens ficam eternamente "pending".
 
-**3. Novo robot `OMIE_COMPRAS` no multi-robot**
-Adicionar em `constants.ts` e no `omie-multi-robot`:
-- `criar_conta_pagar` — Lancar contas a pagar com rateio/CC
-- `importar_danfe` — Importar NF-e via chave de acesso
-- `criar_requisicao_compra` — Criar requisicao no Omie
+**Fase 1 inclui:**
 
-**4. Pagina de Configuracao de Compras (frontend)**
-Nova aba na pagina `Compras.tsx` chamada "Configuracoes" com:
-- Selecao de Conta Corrente padrao (carregada do Omie)
-- Configuracao de Centros de Custo e regras de rateio (linhas com departamento + %, validacao = 100%)
-- Categoria padrao para lancamentos
+1. **Nova edge function `sync-queue-worker`** que:
+   - Busca ate 10 itens com `status = 'pending'` e `next_retry_at IS NULL OR next_retry_at <= now()`
+   - Roteia por `action` para as edge functions existentes (omie-sync-customer, omie-create-order, etc)
+   - Marca `success` ou `error` com backoff exponencial (retry_count * 60s)
+   - Atualiza `processed_at` e `error_message`
 
-**5. Expandir pagina `Compras.tsx`**
-Adicionar aba "Contas a Pagar" com formulario para lancamento manual que usa as configuracoes salvas (CC, rateio, categoria).
+2. **pg_cron schedule** para chamar o worker a cada minuto
 
-### Arquivos a criar/modificar
+3. **UI de Retry** na pagina de Logs: botao para resetar um item da fila para `pending`
+
+4. **Dashboard widget** mostrando itens pendentes na fila com aging
+
+### Arquivos a criar/modificar (Fase 1)
 
 | Arquivo | Acao |
 |---|---|
-| Migration SQL | Criar tabela `purchase_config` + RLS |
-| `supabase/functions/omie-compras/index.ts` | Adicionar 5 novas actions |
-| `supabase/functions/omie-multi-robot/index.ts` | Adicionar handler `handleCompras` |
-| `src/lib/constants.ts` | Adicionar robot `OMIE_COMPRAS` |
-| `src/pages/Compras.tsx` | Adicionar abas Configuracoes e Contas a Pagar |
+| `supabase/functions/sync-queue-worker/index.ts` | Criar — worker que processa a fila |
+| SQL (insert tool, nao migration) | pg_cron job para disparo periodico |
+| `src/pages/Logs.tsx` | Adicionar botao "Reprocessar" por log |
+| `src/pages/Dashboard.tsx` | Widget de aging da fila |
+| `supabase/config.toml` | Registrar nova function |
+
+Qual fase voce quer implementar primeiro?
 
