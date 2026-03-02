@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { format } from "date-fns";
@@ -46,8 +46,10 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
-  Loader2
+  Loader2,
+  RotateCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface LogEntry {
   id: string;
@@ -76,6 +78,7 @@ export default function Logs() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("");
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: logs = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ["integration-logs", memberId, statusFilter, actionFilter],
@@ -104,6 +107,36 @@ export default function Logs() {
     },
   });
 
+  // Reprocess mutation — calls sync-queue-worker edge function
+  const reprocessMutation = useMutation({
+    mutationFn: async (log: LogEntry) => {
+      const action = log.action.replace(/^queue_/, "");
+
+      const { data, error } = await supabase.functions.invoke("sync-queue-worker", {
+        body: {
+          action: "reprocess",
+          tenant_id: log.tenant_id,
+          queue_action: action,
+          entity_type: log.entity_type,
+          entity_id: log.entity_id,
+          payload: log.request_payload || {},
+        },
+      });
+
+      if (error) throw error;
+      if (data && !data.success) throw new Error(data.error || "Falha ao reprocessar");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Item re-enfileirado para processamento");
+      queryClient.invalidateQueries({ queryKey: ["integration-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["queue-aging"] });
+    },
+    onError: (err) => {
+      toast.error(`Falha ao reprocessar: ${err instanceof Error ? err.message : "Erro"}`);
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     const Icon = config.icon;
@@ -114,6 +147,10 @@ export default function Logs() {
         {config.label}
       </Badge>
     );
+  };
+
+  const canReprocess = (log: LogEntry) => {
+    return log.status === "error" && log.action.startsWith("queue_");
   };
 
   return (
@@ -205,7 +242,7 @@ export default function Logs() {
                   <TableHead>Entidade</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Tempo</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
+                  <TableHead className="w-[120px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -244,13 +281,26 @@ export default function Logs() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelectedLog(log)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSelectedLog(log)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {canReprocess(log) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => reprocessMutation.mutate(log)}
+                            disabled={reprocessMutation.isPending}
+                            title="Reprocessar"
+                          >
+                            <RotateCcw className={`h-4 w-4 text-warning ${reprocessMutation.isPending ? "animate-spin" : ""}`} />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -321,6 +371,22 @@ export default function Logs() {
                     </pre>
                   </ScrollArea>
                 </div>
+              )}
+
+              {/* Reprocess from detail dialog */}
+              {canReprocess(selectedLog) && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    reprocessMutation.mutate(selectedLog);
+                    setSelectedLog(null);
+                  }}
+                  disabled={reprocessMutation.isPending}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reprocessar este item
+                </Button>
               )}
             </div>
           )}
