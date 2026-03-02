@@ -141,6 +141,135 @@ serve(async (req) => {
         break;
       }
 
+      // === CENTROS DE CUSTO (DEPARTAMENTOS) ===
+      case "listar_centros_custo": {
+        result = await callOmieApi("geral/departamentos", "ListarDepartamentos", {
+          pagina: requestData?.pagina || 1,
+          registros_por_pagina: requestData?.registros_por_pagina || 50,
+        }, credentials);
+        break;
+      }
+
+      // === CATEGORIAS ===
+      case "listar_categorias": {
+        result = await callOmieApi("geral/categorias", "ListarCategorias", {
+          pagina: requestData?.pagina || 1,
+          registros_por_pagina: requestData?.registros_por_pagina || 200,
+        }, credentials);
+        break;
+      }
+
+      // === CONTAS CORRENTES ===
+      case "listar_contas_correntes": {
+        result = await callOmieApi("geral/contacorrente", "ListarContasCorrentes", {
+          pagina: requestData?.pagina || 1,
+          registros_por_pagina: requestData?.registros_por_pagina || 50,
+        }, credentials);
+        break;
+      }
+
+      // === CONTAS A PAGAR (AVANÇADO COM RATEIO) ===
+      case "incluir_conta_pagar_avancado": {
+        const payload: Record<string, unknown> = {
+          codigo_lancamento_integracao: requestData.codigo_lancamento_integracao,
+          codigo_cliente_fornecedor: requestData.codigo_cliente_fornecedor,
+          data_vencimento: requestData.data_vencimento,
+          valor_documento: requestData.valor_documento,
+          codigo_categoria: requestData.codigo_categoria || "",
+          id_conta_corrente: requestData.id_conta_corrente || 0,
+          observacao: requestData.observacao || "",
+        };
+
+        // Rateio por centro de custo (distribuição)
+        if (requestData.distribuicao && Array.isArray(requestData.distribuicao)) {
+          payload.distribuicao = requestData.distribuicao.map((d: any) => ({
+            cCodDepartamento: d.codigo_departamento || d.cCodDepartamento,
+            nValorFixo: d.valor_fixo || d.nValorFixo || 0,
+            nPercentual: d.percentual || d.nPercentual || 0,
+          }));
+        }
+
+        result = await callOmieApi("financas/contapagar", "IncluirContaPagar", payload, credentials);
+        break;
+      }
+
+      // === IMPORTAR NF-e VIA CHAVE DANFE ===
+      case "importar_nfe_danfe": {
+        if (!requestData.chave_acesso) {
+          throw new Error("chave_acesso (44 dígitos) é obrigatória");
+        }
+        result = await callOmieApi("produtos/nfentrada", "ImportarNFeEntrada", {
+          cChaveNFe: requestData.chave_acesso,
+        }, credentials);
+        break;
+      }
+
+      // === PURCHASE CONFIG (CRUD via service_role) ===
+      case "salvar_purchase_config": {
+        // Upsert: if same config_type + omie_code + is_default exists, update
+        const { data: existing } = await supabase
+          .from("purchase_config")
+          .select("id")
+          .eq("tenant_id", tenant_id)
+          .eq("config_type", requestData.config_type)
+          .eq("omie_code", requestData.omie_code)
+          .maybeSingle();
+
+        if (existing) {
+          const { data: updated, error: upErr } = await supabase
+            .from("purchase_config")
+            .update({
+              omie_name: requestData.omie_name,
+              percentual: requestData.percentual || null,
+              is_default: requestData.is_default || false,
+              is_active: true,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id)
+            .select()
+            .single();
+          if (upErr) throw upErr;
+          result = updated;
+        } else {
+          // If is_default, clear other defaults of same type
+          if (requestData.is_default) {
+            await supabase
+              .from("purchase_config")
+              .update({ is_default: false })
+              .eq("tenant_id", tenant_id)
+              .eq("config_type", requestData.config_type);
+          }
+          const { data: inserted, error: insErr } = await supabase
+            .from("purchase_config")
+            .insert({
+              tenant_id,
+              config_type: requestData.config_type,
+              omie_code: requestData.omie_code,
+              omie_name: requestData.omie_name,
+              percentual: requestData.percentual || null,
+              is_default: requestData.is_default || false,
+              is_active: true,
+            })
+            .select()
+            .single();
+          if (insErr) throw insErr;
+          result = inserted;
+        }
+        break;
+      }
+
+      case "listar_purchase_config": {
+        const { data: cfgs, error: cfgErr } = await supabase
+          .from("purchase_config")
+          .select("*")
+          .eq("tenant_id", tenant_id)
+          .eq("is_active", true)
+          .order("config_type");
+        if (cfgErr) throw cfgErr;
+        result = cfgs;
+        break;
+      }
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }

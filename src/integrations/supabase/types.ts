@@ -362,6 +362,63 @@ export type Database = {
           },
         ]
       }
+      purchase_config: {
+        Row: {
+          bitrix_field: string | null
+          config_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          omie_code: string
+          omie_name: string
+          percentual: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          bitrix_field?: string | null
+          config_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          omie_code: string
+          omie_name: string
+          percentual?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          bitrix_field?: string | null
+          config_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          omie_code?: string
+          omie_name?: string
+          percentual?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "purchase_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "bitrix_installations_safe"
+            referencedColumns: ["member_id"]
+          },
+        ]
+      }
       robots_registry: {
         Row: {
           created_at: string | null

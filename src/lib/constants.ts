@@ -95,6 +95,17 @@ export const MULTI_ROBOTS = [
       { value: "cancelar_contrato", label: "Cancelar Contrato" },
     ],
   },
+  {
+    code: "OMIE_COMPRAS",
+    name: "Omie: Compras",
+    description: "Requisições, Contas a Pagar e Importação DANFE",
+    icon: "Truck",
+    actions: [
+      { value: "criar_conta_pagar", label: "Lançar Contas a Pagar (com rateio/CC)" },
+      { value: "importar_danfe", label: "Importar NF-e via Chave DANFE" },
+      { value: "criar_requisicao_compra", label: "Criar Requisição de Compra" },
+    ],
+  },
 ] as const;
 
 export type MultiRobot = typeof MULTI_ROBOTS[number];

@@ -579,6 +579,94 @@ async function handleContratos(
   }
 }
 
+// ========== COMPRAS HANDLERS ==========
+async function handleCompras(
+  action: string,
+  dealData: Record<string, unknown>,
+  credentials: { app_key: string; app_secret: string },
+  supabase: any,
+  tenantId: string
+) {
+  const { app_key, app_secret } = credentials;
+
+  switch (action) {
+    case "criar_conta_pagar": {
+      // Load saved config for rateio/CC/categoria
+      const { data: configs } = await supabase
+        .from("purchase_config")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true);
+
+      const defaultCC = configs?.find((c: any) => c.config_type === "conta_corrente" && c.is_default);
+      const defaultCat = configs?.find((c: any) => c.config_type === "categoria" && c.is_default);
+      const rateioRules = configs?.filter((c: any) => c.config_type === "rateio") || [];
+
+      const valor = Number(dealData.OPPORTUNITY) || Number(dealData.UF_CRM_VALOR) || 0;
+      const fornecedorId = dealData.UF_CRM_OMIE_CUSTOMER_ID || dealData.UF_CRM_FORNECEDOR_ID;
+
+      if (!fornecedorId) {
+        return { status: "error", id: "", message: "ID do fornecedor não encontrado no deal" };
+      }
+
+      const payload: Record<string, unknown> = {
+        codigo_lancamento_integracao: `BITRIX_DEAL_${dealData.ID}`,
+        codigo_cliente_fornecedor: Number(fornecedorId),
+        data_vencimento: dealData.UF_CRM_DATA_VENCIMENTO || new Date().toISOString().split("T")[0],
+        valor_documento: valor,
+        codigo_categoria: defaultCat?.omie_code || "",
+        id_conta_corrente: defaultCC ? Number(defaultCC.omie_code) : 0,
+        observacao: `Lançamento automático via Bitrix24 - Deal #${dealData.ID}`,
+      };
+
+      if (rateioRules.length > 0) {
+        payload.distribuicao = rateioRules.map((r: any) => ({
+          cCodDepartamento: r.omie_code,
+          nPercentual: Number(r.percentual),
+          nValorFixo: (valor * (Number(r.percentual) / 100)).toFixed(2),
+        }));
+      }
+
+      const result = await callOmieApi(app_key, app_secret, "financas/contapagar", "IncluirContaPagar", payload);
+      return {
+        status: result.codigo_lancamento_omie ? "success" : "error",
+        id: result.codigo_lancamento_omie?.toString() || "",
+        message: result.codigo_lancamento_omie ? "Conta a pagar lançada" : result.faultstring || "Erro ao lançar",
+      };
+    }
+
+    case "importar_danfe": {
+      const chave = dealData.UF_CRM_CHAVE_DANFE || dealData.UF_CRM_CHAVE_NFE;
+      if (!chave) {
+        return { status: "error", id: "", message: "Chave DANFE não encontrada no deal" };
+      }
+      const result = await callOmieApi(app_key, app_secret, "produtos/nfentrada", "ImportarNFeEntrada", {
+        cChaveNFe: chave,
+      });
+      return {
+        status: result.nCodNFe ? "success" : "error",
+        id: result.nCodNFe?.toString() || "",
+        message: result.nCodNFe ? "NF-e importada via DANFE" : result.faultstring || "Erro ao importar",
+      };
+    }
+
+    case "criar_requisicao_compra": {
+      const result = await callOmieApi(app_key, app_secret, "produtos/requisicaocompra", "IncluirRequisicao", {
+        cDescricao: dealData.TITLE || `Requisição Deal #${dealData.ID}`,
+        nCodCli: Number(dealData.UF_CRM_OMIE_CUSTOMER_ID) || 0,
+      });
+      return {
+        status: result.nCodReq ? "success" : "error",
+        id: result.nCodReq?.toString() || "",
+        message: result.nCodReq ? "Requisição criada" : result.faultstring || "Erro ao criar requisição",
+      };
+    }
+
+    default:
+      return { status: "error", id: "", message: `Ação desconhecida: ${action}` };
+  }
+}
+
 // ========== MAIN HANDLER ==========
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -657,6 +745,9 @@ serve(async (req) => {
         break;
       case "OMIE_CONTRATOS":
         result = await handleContratos(action as string, dealData, omieCredentials);
+        break;
+      case "OMIE_COMPRAS":
+        result = await handleCompras(action as string, dealData, omieCredentials, supabase, authMemberId as string);
         break;
       default:
         result = { status: "error", id: "", message: `Robot desconhecido: ${robotCode}` };
