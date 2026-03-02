@@ -5,6 +5,7 @@ import { StatsCard } from "@/components/ui/stats-card";
 import { ModuleCard } from "@/components/ui/module-card";
 import { ConnectionStatus } from "@/components/dashboard/ConnectionStatus";
 import { RecentLogs } from "@/components/dashboard/RecentLogs";
+import { QueueAgingWidget } from "@/components/dashboard/QueueAgingWidget";
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -234,7 +235,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Connection Status & Recent Activity */}
+      {/* Connection Status, Queue & Recent Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -260,23 +261,26 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Atividade Recente</CardTitle>
-              <CardDescription>
-                Últimas sincronizações
-              </CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/logs">Ver todos</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <RecentLogs logs={recentLogs} isLoading={logsLoading} />
-          </CardContent>
-        </Card>
+        <QueueAgingWidget />
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Atividade Recente</CardTitle>
+            <CardDescription>
+              Últimas sincronizações
+            </CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/logs">Ver todos</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <RecentLogs logs={recentLogs} isLoading={logsLoading} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
