@@ -18,6 +18,7 @@ import Compras from "@/pages/Compras";
 import Contratos from "@/pages/Contratos";
 import Contador from "@/pages/Contador";
 import Placements from "@/pages/Placements";
+import Produtos from "@/pages/Produtos";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -138,6 +139,14 @@ const App = () => (
             element={
               <DashboardLayout>
                 <Placements />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/produtos"
+            element={
+              <DashboardLayout>
+                <Produtos />
               </DashboardLayout>
             }
           />

@@ -49,6 +49,7 @@ const mainNavItems: NavItem[] = [
 const moduleNavItems: NavItem[] = [
   { title: "Finanças", url: "/financas", icon: Wallet, badge: "Novo" },
   { title: "Vendas", url: "/vendas", icon: ShoppingCart },
+  { title: "Produtos", url: "/produtos", icon: Package, badge: "Novo" },
   { title: "Estoque", url: "/estoque", icon: Package },
   { title: "Compras", url: "/compras", icon: Truck },
   { title: "CRM", url: "/crm", icon: Users },

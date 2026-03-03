@@ -150,7 +150,6 @@ serve(async (req) => {
 
       case "Cliente.Incluido":
       case "Cliente.Alterado":
-        // Queue customer update to Bitrix
         await supabase.from("sync_queue").insert({
           tenant_id: tenantId,
           action: "sync_customer_to_bitrix",
@@ -160,6 +159,19 @@ serve(async (req) => {
           status: "pending",
         });
         processingResult = { processed: true, action: "queued_customer_sync" };
+        break;
+
+      case "Produto.Incluido":
+      case "Produto.Alterado":
+        await supabase.from("sync_queue").insert({
+          tenant_id: tenantId,
+          action: "sync_product_to_bitrix",
+          entity_type: "product",
+          entity_id: payload.produto?.nCodProd || payload.messageId,
+          payload: payload,
+          status: "pending",
+        });
+        processingResult = { processed: true, action: "queued_product_sync" };
         break;
 
       default:
