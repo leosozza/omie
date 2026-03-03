@@ -97,6 +97,15 @@ const ACTION_ROUTES: Record<string, { functionName: string; buildPayload: (item:
       ...item.payload,
     }),
   },
+  // Products
+  sync_product_to_bitrix: {
+    functionName: "omie-produtos",
+    buildPayload: (item) => ({
+      tenant_id: item.tenant_id,
+      action: "sync_to_bitrix",
+      data: item.payload,
+    }),
+  },
 };
 
 const BATCH_SIZE = 10;
